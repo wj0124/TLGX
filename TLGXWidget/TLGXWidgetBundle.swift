@@ -10,5 +10,6 @@ import SwiftUI
 struct TLGXWidgetBundle: WidgetBundle {
     var body: some Widget {
         TLGXLiveActivity()
+        TLGXReminderWidget()
     }
 }

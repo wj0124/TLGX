@@ -4,48 +4,44 @@
 //
 
 import ActivityKit
-import WidgetKit
 import SwiftUI
+import WidgetKit
 
 struct TLGXLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: TLGXAttributes.self) { context in
-            // Lock screen / banner UI
-            VStack(alignment: .leading, spacing: 4) {
-                Text("输入内容")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(context.state.message.isEmpty ? "（未输入）" : context.state.message)
-                    .font(.title3)
-                    .lineLimit(3)
+            // Lock screen / banner
+            HStack(spacing: 12) {
+                Text(context.state.title)
+                    .font(.headline)
+                    .lineLimit(2)
+                Spacer(minLength: 0)
             }
-            .padding()
-            .activityBackgroundTint(Color.black.opacity(0.6))
-            .activitySystemActionForegroundColor(.white)
-
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .activityBackgroundTint(Color(uiColor: .systemGray3))
+            .activitySystemActionForegroundColor(.primary)
         } dynamicIsland: { context in
             DynamicIsland {
-                DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "text.bubble.fill")
-                        .foregroundStyle(.tint)
-                }
                 DynamicIslandExpandedRegion(.center) {
-                    Text(context.state.message.isEmpty ? "（未输入）" : context.state.message)
+                    Text(context.state.title)
                         .font(.headline)
                         .lineLimit(2)
-                }
-                DynamicIslandExpandedRegion(.bottom) {
-                    Text("TLGX 实时活动")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 4)
                 }
             } compactLeading: {
-                Image(systemName: "text.bubble.fill")
+                Image("isLandIcon")
+                    .resizable()
+                    .scaledToFit()
             } compactTrailing: {
-                Text(String(context.state.message.prefix(8)))
+                Text(context.state.title)
                     .lineLimit(1)
+                    .frame(maxWidth: 100)
             } minimal: {
-                Image(systemName: "text.bubble.fill")
+                Image("isLandIcon")
+                    .resizable()
+                    .scaledToFit()
             }
         }
     }

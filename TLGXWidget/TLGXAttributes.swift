@@ -2,8 +2,7 @@
 //  TLGXAttributes.swift
 //  TLGXWidget
 //
-//  NOTE: Mirror of the file in the main app target so the widget extension
-//  can decode the shared ActivityAttributes type.
+//  Mirror of the file in the main app target.
 //
 
 import ActivityKit
@@ -11,8 +10,8 @@ import Foundation
 
 struct TLGXAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
-        var message: String
+        var title: String
     }
 
-    var name: String
+    var reminderID: String
 }
