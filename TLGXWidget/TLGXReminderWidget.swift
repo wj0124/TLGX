@@ -39,42 +39,53 @@ struct ReminderWidgetView: View {
     var entry: ReminderEntry
     @Environment(\.widgetFamily) private var family
 
+    /// Resolve the emoji for a reminder: user-picked override first,
+    /// otherwise fall back to `EmojiGenerator`'s keyword auto-detection.
+    private func emoji(for r: Reminder) -> String {
+        r.emoji ?? EmojiGenerator.emoji(for: r.title)
+    }
+
     var body: some View {
         if let r = entry.reminder {
             switch family {
             case .accessoryInline:
                 // 锁屏顶部一行文本（不支持多行、不支持自定义颜色）
-                Text(r.title)
+                Text("\(emoji(for: r)) \(r.title)")
 
             case .accessoryCircular:
                 // 锁屏圆形：只能塞极少量信息
                 ZStack {
                     AccessoryWidgetBackground()
-                    Text(r.title.prefix(2))
-                        .font(.system(size: 14, weight: .semibold))
+                    Text(emoji(for: r))
+                        .font(.system(size: 22))
                         .minimumScaleFactor(0.5)
-                        .multilineTextAlignment(.center)
                         .padding(4)
                 }
 
             case .accessoryRectangular:
                 // 锁屏长条：可显示 2-3 行
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("提醒")
-                        .font(.caption2)
-                        .widgetAccentable()
-                    Text(r.title)
-                        .font(.headline)
-                        .lineLimit(2)
+                HStack(alignment: .center, spacing: 8) {
+                    Text(emoji(for: r))
+                        .font(.system(size: 22))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("提醒")
+                            .font(.caption2)
+                            .widgetAccentable()
+                        Text(r.title)
+                            .font(.headline)
+                            .lineLimit(2)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             default:
                 // 主屏 small / medium
                 VStack(alignment: .leading, spacing: 6) {
+                    Text(emoji(for: r))
+                        .font(.system(size: 28))
                     Text(r.title)
                         .font(.headline)
-                        .lineLimit(family == .systemSmall ? 6 : 4)
+                        .lineLimit(family == .systemSmall ? 5 : 3)
                     Spacer(minLength: 0)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

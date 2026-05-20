@@ -455,8 +455,11 @@ struct ContentView: View {
         guard activeID == reminder.id, let act = activity else { return }
         let trimmed = reminder.title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        let state = TLGXAttributes.ContentState(title: trimmed,
-                                                    emoji: reminder.emoji ?? EmojiGenerator.emoji(for: trimmed))
+        let state = TLGXAttributes.ContentState(
+            title: trimmed,
+            emoji: reminder.emoji ?? EmojiGenerator.emoji(for: trimmed),
+            subtitle: reminder.schedule?.displayText
+        )
         Task {
             await act.update(ActivityContent(state: state, staleDate: nil))
         }
@@ -502,8 +505,11 @@ struct ContentView: View {
         }
 
         let attrs = TLGXAttributes(reminderID: reminder.id.uuidString)
-        let state = TLGXAttributes.ContentState(title: reminder.title,
-                                                emoji: reminder.emoji ?? EmojiGenerator.emoji(for: reminder.title))
+        let state = TLGXAttributes.ContentState(
+            title: reminder.title,
+            emoji: reminder.emoji ?? EmojiGenerator.emoji(for: reminder.title),
+            subtitle: reminder.schedule?.displayText
+        )
         do {
             let act = try Activity.request(
                 attributes: attrs,

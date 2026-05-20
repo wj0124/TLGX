@@ -39,9 +39,23 @@
 		B01000000000000000000001 /* TLGXWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TLGXWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B01000000000000000000020 /* Exceptions for "TLGX" folder in "TLGXWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				EmojiGenerator.swift,
+				EndActivityIntent.swift,
+			);
+			target = B01000000000000000000003 /* TLGXWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A03924342F99F69E00879030 /* TLGX */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B01000000000000000000020 /* Exceptions for "TLGX" folder in "TLGXWidgetExtension" target */,
+			);
 			path = TLGX;
 			sourceTree = "<group>";
 		};
