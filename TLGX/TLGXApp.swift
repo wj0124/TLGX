@@ -9,9 +9,18 @@ import SwiftUI
 
 @main
 struct TLGXApp: App {
+    @StateObject private var notifications = NotificationDelegate.shared
+
+    init() {
+        // Install the notification delegate as early as possible so that
+        // taps on cold-start notifications are delivered to us.
+        NotificationDelegate.shared.register()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(notifications)
         }
     }
 }

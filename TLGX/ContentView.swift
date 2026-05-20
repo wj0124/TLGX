@@ -5,9 +5,12 @@
 
 import ActivityKit
 import SwiftUI
+import UserNotifications
 import WidgetKit
 
 struct ContentView: View {
+    @EnvironmentObject private var notifications: NotificationDelegate
+
     @State private var reminders: [Reminder] = []
     @State private var activeID: UUID? = nil
     @State private var activity: Activity<TLGXAttributes>? = nil
@@ -16,6 +19,18 @@ struct ContentView: View {
     @State private var composerText: String = ""
     @State private var editingID: UUID? = nil
     @FocusState private var composerFocused: Bool
+
+    /// User-picked emoji override for the composer; `nil` = auto-detect from text.
+    @State private var composerEmoji: String? = nil
+    /// Controls the emoji picker sheet visibility.
+    @State private var showEmojiPicker: Bool = false
+
+    /// Reminder waiting for the user to confirm starting a Live Activity
+    /// (set when the user taps a delivered local notification).
+    @State private var pendingActivityReminder: Reminder? = nil
+
+    /// Reminder currently being edited in the schedule editor sheet.
+    @State private var editingScheduleReminder: Reminder? = nil
 
     var body: some View {
         NavigationStack {
@@ -38,10 +53,45 @@ struct ContentView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
+            .alert(
+                "开启实时活动？",
+                isPresented: Binding(
+                    get: { pendingActivityReminder != nil },
+                    set: { if !$0 { pendingActivityReminder = nil } }
+                ),
+                presenting: pendingActivityReminder
+            ) { reminder in
+                Button("开启") {
+                    pendingActivityReminder = nil
+                    Task { await startActivity(for: reminder) }
+                }
+                Button("稍后", role: .cancel) {
+                    pendingActivityReminder = nil
+                }
+            } message: { reminder in
+                Text("是否将「\(reminder.title)」开启到灵动岛 / 锁屏？")
+            }
+            .sheet(item: $editingScheduleReminder) { reminder in
+                ScheduleEditorView(
+                    reminderTitle: reminder.title,
+                    initialSchedule: reminder.schedule,
+                    onSave: { newSchedule in
+                        saveSchedule(newSchedule, for: reminder)
+                        editingScheduleReminder = nil
+                    },
+                    onCancel: {
+                        editingScheduleReminder = nil
+                    }
+                )
+            }
         }
         .onAppear {
             reminders = ReminderStore.load()
             syncWithSystem()
+            handlePendingReminder()
+        }
+        .onChange(of: notifications.pendingReminderID) { _, _ in
+            handlePendingReminder()
         }
     }
 
@@ -61,8 +111,24 @@ struct ContentView: View {
     private var list: some View {
         List {
             Section {
-                ForEach(reminders) { reminder in
+                ForEach(displayReminders) { reminder in
                     row(reminder)
+                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                            Button {
+                                togglePin(reminder)
+                            } label: {
+                                Label(reminder.isPinned ? "取消置顶" : "置顶",
+                                      systemImage: reminder.isPinned ? "pin.slash.fill" : "pin.fill")
+                            }
+                            .tint(.orange)
+
+                            Button {
+                                editingScheduleReminder = reminder
+                            } label: {
+                                Label("提醒时间", systemImage: "clock")
+                            }
+                            .tint(.indigo)
+                        }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
                                 delete(reminder)
@@ -72,7 +138,7 @@ struct ContentView: View {
                         }
                 }
             } footer: {
-                Text("点击行可编辑内容；右侧开关用于开启 / 关闭实时活动；桌面小组件请长按“编辑”选择要显示的提醒。")
+                Text("点击行可编辑内容；右侧开关用于开启 / 关闭实时活动；左滑可置顶或设置提醒时间；桌面小组件请长按“编辑”选择要显示的提醒。")
                     .font(.footnote)
                     .padding(.top, 8)
             }
@@ -81,20 +147,62 @@ struct ContentView: View {
         .scrollDismissesKeyboard(.interactively)
     }
 
+    /// Reminders ordered for display: pinned items first, otherwise preserving
+    /// the underlying insertion order in `reminders`.
+    private var displayReminders: [Reminder] {
+        reminders.enumerated()
+            .sorted { lhs, rhs in
+                if lhs.element.isPinned != rhs.element.isPinned {
+                    return lhs.element.isPinned && !rhs.element.isPinned
+                }
+                return lhs.offset < rhs.offset
+            }
+            .map(\.element)
+    }
+
     @ViewBuilder
     private func row(_ reminder: Reminder) -> some View {
         let isLive = activeID == reminder.id
         let isEditing = editingID == reminder.id
+
+        let displayEmoji = reminder.emoji ?? EmojiGenerator.emoji(for: reminder.title)
+        let tint = EmojiGenerator.tint(for: displayEmoji)
+
         HStack(alignment: .center, spacing: 12) {
+            Text(displayEmoji)
+                .font(.system(size: 22))
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(tint.opacity(0.18)))
+                .id(displayEmoji)
+                .transition(.scale.combined(with: .opacity))
+                .animation(.spring(response: 0.35, dampingFraction: 0.6),
+                           value: displayEmoji)
+
             Button {
                 beginEdit(reminder)
             } label: {
-                Text(reminder.title)
-                    .font(.body)
-                    .foregroundStyle(isEditing ? Color.indigo : .primary)
-                    .lineLimit(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        if reminder.isPinned {
+                            Image(systemName: "pin.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.orange)
+                                .accessibilityLabel("已置顶")
+                        }
+                        Text(reminder.title)
+                            .font(.body)
+                            .foregroundStyle(isEditing ? Color.indigo : .primary)
+                            .lineLimit(2)
+                    }
+                    if let schedule = reminder.schedule {
+                        Label(schedule.displayText, systemImage: "clock")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .labelStyle(.titleAndIcon)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
@@ -119,6 +227,29 @@ struct ContentView: View {
         return VStack(spacing: 0) {
             Divider()
             HStack(alignment: .center, spacing: 10) {
+                Button {
+                    composerFocused = false
+                    showEmojiPicker = true
+                } label: {
+                    let composerTint = EmojiGenerator.tint(for: effectiveComposerEmoji)
+                    Text(effectiveComposerEmoji)
+                        .font(.system(size: 22))
+                        .frame(width: 40, height: 40)
+                        .background(
+                            Circle().fill(composerTint.opacity(0.18))
+                        )
+                        .overlay(
+                            Circle()
+                                .stroke(composerEmoji != nil ? composerTint : Color.clear,
+                                        lineWidth: 1.5)
+                        )
+                        .id(effectiveComposerEmoji)
+                        .transition(.scale.combined(with: .opacity))
+                }
+                .buttonStyle(.plain)
+                .animation(.spring(response: 0.35, dampingFraction: 0.6),
+                           value: effectiveComposerEmoji)
+
                 TextField(
                     isEditing ? "修改提醒内容" : "新建提醒…",
                     text: $composerText,
@@ -157,6 +288,21 @@ struct ContentView: View {
             )
             .animation(.easeInOut(duration: 0.18), value: isEditing)
         }
+        .sheet(isPresented: $showEmojiPicker) {
+            EmojiPickerView(
+                current: effectiveComposerEmoji,
+                autoEmoji: EmojiGenerator.emoji(for: composerText),
+                isOverridden: composerEmoji != nil,
+                onSelect: { picked in
+                    composerEmoji = picked
+                }
+            )
+        }
+    }
+
+    /// Effective emoji shown on the composer button: user override > auto-detect.
+    private var effectiveComposerEmoji: String {
+        composerEmoji ?? EmojiGenerator.emoji(for: composerText)
     }
 
     // MARK: - Composer Actions
@@ -167,6 +313,7 @@ struct ContentView: View {
         } else {
             editingID = reminder.id
             composerText = reminder.title
+            composerEmoji = reminder.emoji
             composerFocused = true
         }
     }
@@ -191,6 +338,7 @@ struct ContentView: View {
     private func cancelEdit() {
         editingID = nil
         composerText = ""
+        composerEmoji = nil
         composerFocused = false
     }
 
@@ -200,18 +348,29 @@ struct ContentView: View {
 
         if let id = editingID, let idx = reminders.firstIndex(where: { $0.id == id }) {
             reminders[idx].title = trimmed
+            reminders[idx].emoji = composerEmoji
             ReminderStore.save(reminders)
             WidgetCenter.shared.reloadAllTimelines()
             syncActiveActivityTitle(for: reminders[idx])
+            // If this reminder has a schedule with no custom push text, the
+            // notification body uses the title; re-register so the change
+            // takes effect.
+            if let sched = reminders[idx].schedule,
+               (sched.pushText ?? "").isEmpty {
+                let updated = reminders[idx]
+                Task { try? await ReminderScheduler.schedule(reminder: updated) }
+            }
             editingID = nil
             composerText = ""
+            composerEmoji = nil
             composerFocused = false
         } else {
-            let new = Reminder(title: trimmed)
+            let new = Reminder(title: trimmed, emoji: composerEmoji)
             reminders.insert(new, at: 0)
             ReminderStore.save(reminders)
             WidgetCenter.shared.reloadAllTimelines()
             composerText = ""
+            composerEmoji = nil
             // Keep focus to allow rapid entry
         }
     }
@@ -225,14 +384,79 @@ struct ContentView: View {
         }
         reminders.removeAll { $0.id == reminder.id }
         ReminderStore.save(reminders)
+        ReminderScheduler.cancel(reminderID: reminder.id)
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    private func togglePin(_ reminder: Reminder) {
+        guard let idx = reminders.firstIndex(where: { $0.id == reminder.id }) else { return }
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            reminders[idx].isPinned.toggle()
+        }
+        ReminderStore.save(reminders)
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    // MARK: - Schedule
+
+    /// Persist a schedule change (nil = clear) and re-register notifications.
+    private func saveSchedule(_ schedule: ReminderSchedule?, for reminder: Reminder) {
+        guard let idx = reminders.firstIndex(where: { $0.id == reminder.id }) else { return }
+        reminders[idx].schedule = schedule
+        ReminderStore.save(reminders)
+        let updated = reminders[idx]
+        WidgetCenter.shared.reloadAllTimelines()
+
+        Task {
+            if schedule != nil {
+                let granted = await ReminderScheduler.requestAuthIfNeeded()
+                guard granted else {
+                    await MainActor.run {
+                        errorMessage = "请在 设置 > 提了个醒 中开启「通知」权限"
+                    }
+                    return
+                }
+            }
+            do {
+                try await ReminderScheduler.schedule(reminder: updated)
+            } catch {
+                await MainActor.run {
+                    errorMessage = "设置失败：\(error.localizedDescription)"
+                }
+            }
+        }
+    }
+
+    /// Consume a reminder ID delivered by a notification tap and prompt the
+    /// user to confirm starting its Live Activity.
+    private func handlePendingReminder() {
+        guard let id = notifications.pendingReminderID else { return }
+
+        let target = reminders.first(where: { $0.id == id })
+            ?? ReminderStore.load().first(where: { $0.id == id })
+
+        notifications.pendingReminderID = nil
+
+        guard let reminder = target else { return }
+
+        if reminders.first(where: { $0.id == reminder.id }) == nil {
+            reminders = ReminderStore.load()
+        }
+
+        // Don't re-prompt if a Live Activity for this reminder is already running.
+        guard activeID != reminder.id else { return }
+
+        pendingActivityReminder = reminder
     }
 
     private func syncActiveActivityTitle(for reminder: Reminder) {
         guard activeID == reminder.id, let act = activity else { return }
         let trimmed = reminder.title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        let state = TLGXAttributes.ContentState(title: trimmed)
+        let state = TLGXAttributes.ContentState(title: trimmed,
+                                                    emoji: reminder.emoji ?? EmojiGenerator.emoji(for: trimmed))
         Task {
             await act.update(ActivityContent(state: state, staleDate: nil))
         }
@@ -278,7 +502,8 @@ struct ContentView: View {
         }
 
         let attrs = TLGXAttributes(reminderID: reminder.id.uuidString)
-        let state = TLGXAttributes.ContentState(title: reminder.title)
+        let state = TLGXAttributes.ContentState(title: reminder.title,
+                                                emoji: reminder.emoji ?? EmojiGenerator.emoji(for: reminder.title))
         do {
             let act = try Activity.request(
                 attributes: attrs,
@@ -328,4 +553,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(NotificationDelegate.shared)
 }

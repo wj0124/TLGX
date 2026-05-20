@@ -31,9 +31,8 @@ struct TLGXLiveActivity: Widget {
                         .padding(.horizontal, 4)
                 }
             } compactLeading: {
-                Image("isLandIcon")
-                    .resizable()
-                    .scaledToFit()
+                Text(context.state.emoji)
+                    .font(.system(size: 16))
             } compactTrailing: {
                 Text(context.state.title)
                     .lineLimit(1)

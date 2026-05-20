@@ -41,24 +41,69 @@ struct ReminderWidgetView: View {
 
     var body: some View {
         if let r = entry.reminder {
-            VStack(alignment: .leading, spacing: 6) {
+            switch family {
+            case .accessoryInline:
+                // 锁屏顶部一行文本（不支持多行、不支持自定义颜色）
                 Text(r.title)
-                    .font(.headline)
-                    .lineLimit(family == .systemSmall ? 6 : 4)
-                Spacer(minLength: 0)
+
+            case .accessoryCircular:
+                // 锁屏圆形：只能塞极少量信息
+                ZStack {
+                    AccessoryWidgetBackground()
+                    Text(r.title.prefix(2))
+                        .font(.system(size: 14, weight: .semibold))
+                        .minimumScaleFactor(0.5)
+                        .multilineTextAlignment(.center)
+                        .padding(4)
+                }
+
+            case .accessoryRectangular:
+                // 锁屏长条：可显示 2-3 行
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("提醒")
+                        .font(.caption2)
+                        .widgetAccentable()
+                    Text(r.title)
+                        .font(.headline)
+                        .lineLimit(2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            default:
+                // 主屏 small / medium
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(r.title)
+                        .font(.headline)
+                        .lineLimit(family == .systemSmall ? 6 : 4)
+                    Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         } else {
-            VStack(spacing: 6) {
-                Image(systemName: "hand.tap")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                Text("长按编辑\n选择要显示的提醒")
+            switch family {
+            case .accessoryInline:
+                Text("点击选择提醒")
+            case .accessoryCircular:
+                ZStack {
+                    AccessoryWidgetBackground()
+                    Image(systemName: "hand.tap")
+                }
+            case .accessoryRectangular:
+                Text("长按编辑选择提醒")
                     .font(.footnote)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            default:
+                VStack(spacing: 6) {
+                    Image(systemName: "hand.tap")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                    Text("长按编辑\n选择要显示的提醒")
+                        .font(.footnote)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }
@@ -77,6 +122,12 @@ struct TLGXReminderWidget: Widget {
         }
         .configurationDisplayName("提了个醒")
         .description("长按小组件选择要显示的提醒。")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies([
+            .systemSmall,
+            .systemMedium,
+            .accessoryCircular,
+            .accessoryRectangular,
+            .accessoryInline
+        ])
     }
 }
