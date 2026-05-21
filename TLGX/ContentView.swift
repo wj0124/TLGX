@@ -32,6 +32,12 @@ struct ContentView: View {
     /// Reminder currently being edited in the schedule editor sheet.
     @State private var editingScheduleReminder: Reminder? = nil
 
+    /// Controls the About / privacy / help sheet visibility.
+    @State private var showAbout: Bool = false
+
+    /// Controls the Settings sheet (iCloud sync + future toggles).
+    @State private var showSettings: Bool = false
+
     var body: some View {
         NavigationStack {
             Group {
@@ -41,7 +47,34 @@ struct ContentView: View {
                     list
                 }
             }
-            .navigationTitle("提了个醒")
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    titleSubtitleStack
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Label("设置", systemImage: "gearshape")
+                        }
+                        Button {
+                            showAbout = true
+                        } label: {
+                            Label("关于", systemImage: "info.circle")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .frame(width: 32, height: 32)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("更多")
+                }
+            }
             .safeAreaInset(edge: .bottom) {
                 composerBar
             }
@@ -69,7 +102,7 @@ struct ContentView: View {
                     pendingActivityReminder = nil
                 }
             } message: { reminder in
-                Text("是否将「\(reminder.title)」开启到灵动岛 / 锁屏？")
+                Text("是否将「\(reminder.title)」开启为实时活动？")
             }
             .sheet(item: $editingScheduleReminder) { reminder in
                 ScheduleEditorView(
@@ -84,6 +117,12 @@ struct ContentView: View {
                     }
                 )
             }
+            .sheet(isPresented: $showAbout) {
+                AboutView()
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
+            }
         }
         .onAppear {
             reminders = ReminderStore.load()
@@ -92,6 +131,13 @@ struct ContentView: View {
         }
         .onChange(of: notifications.pendingReminderID) { _, _ in
             handlePendingReminder()
+        }
+        .onReceive(NotificationCenter.default.publisher(
+            for: ReminderStore.didChangeRemotelyNotification
+        )) { _ in
+            // iCloud delivered an update from another device; rehydrate
+            // the in-memory list so the UI reflects the merged state.
+            reminders = ReminderStore.load()
         }
     }
 
@@ -109,42 +155,55 @@ struct ContentView: View {
     }
 
     private var list: some View {
-        List {
-            Section {
-                ForEach(displayReminders) { reminder in
-                    row(reminder)
-                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                            Button {
-                                togglePin(reminder)
-                            } label: {
-                                Label(reminder.isPinned ? "取消置顶" : "置顶",
-                                      systemImage: reminder.isPinned ? "pin.slash.fill" : "pin.fill")
-                            }
-                            .tint(.orange)
+        ScrollViewReader { proxy in
+            List {
+                Section {
+                    let items = displayReminders
+                    ForEach(items, id: \.id) { reminder in
+                        row(reminder)
+                            .id(reminder.id)
+                            .listRowBackground(rowBackground(for: reminder))
+                            .listRowSeparator(.hidden)
+                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                Button {
+                                    togglePin(reminder)
+                                } label: {
+                                    Label(reminder.isPinned ? "取消置顶" : "置顶",
+                                          systemImage: reminder.isPinned ? "pin.slash.fill" : "pin.fill")
+                                }
+                                .tint(.orange)
 
-                            Button {
-                                editingScheduleReminder = reminder
-                            } label: {
-                                Label("提醒时间", systemImage: "clock")
+                                Button {
+                                    editingScheduleReminder = reminder
+                                } label: {
+                                    Label("提醒时间", systemImage: "clock")
+                                }
+                                .tint(.indigo)
                             }
-                            .tint(.indigo)
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                delete(reminder)
-                            } label: {
-                                Label("删除", systemImage: "trash")
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    delete(reminder)
+                                } label: {
+                                    Label("删除", systemImage: "trash")
+                                }
                             }
-                        }
+                    }
                 }
-            } footer: {
-                Text("点击行可编辑内容；右侧开关用于开启 / 关闭实时活动；左滑可置顶或设置提醒时间；桌面小组件请长按“编辑”选择要显示的提醒。")
-                    .font(.footnote)
-                    .padding(.top, 8)
+            }
+            .listStyle(.plain)
+            .scrollDismissesKeyboard(.interactively)
+            .onChange(of: editingID) { _, newID in
+                guard let id = newID else { return }
+                // Wait one tick so the keyboard's safe-area inset is applied
+                // before scrolling, otherwise the target row can land under
+                // the composer.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        proxy.scrollTo(id, anchor: .center)
+                    }
+                }
             }
         }
-        .listStyle(.insetGrouped)
-        .scrollDismissesKeyboard(.interactively)
     }
 
     /// Reminders ordered for display: pinned items first, otherwise preserving
@@ -160,6 +219,23 @@ struct ContentView: View {
             .map(\.element)
     }
 
+    /// State-aware row background: encodes "currently live / being edited /
+    /// pinned" as a quiet tinted wash so the user can scan status without
+    /// extra UI affordances. Falls back to transparent for the common case.
+    private func rowBackground(for reminder: Reminder) -> Color {
+        if activeID == reminder.id {
+            let tint = EmojiGenerator.tint(for: reminder.emoji ?? EmojiGenerator.emoji(for: reminder.title))
+            return tint.opacity(0.12)
+        }
+        if reminder.isPinned {
+            // Neutral, non-colored wash so pinned items read as "slightly
+            // raised" against the plain list background, without competing
+            // with the live/editing accent colors.
+            return Color.primary.opacity(0.06)
+        }
+        return .clear
+    }
+
     @ViewBuilder
     private func row(_ reminder: Reminder) -> some View {
         let isLive = activeID == reminder.id
@@ -170,35 +246,21 @@ struct ContentView: View {
 
         HStack(alignment: .center, spacing: 12) {
             Text(displayEmoji)
-                .font(.system(size: 22))
+                .font(.system(size: 24))
                 .frame(width: 36, height: 36)
-                .background(Circle().fill(tint.opacity(0.18)))
-                .id(displayEmoji)
-                .transition(.scale.combined(with: .opacity))
-                .animation(.spring(response: 0.35, dampingFraction: 0.6),
-                           value: displayEmoji)
+                .background(Circle().fill(tint.opacity(0.3)))
 
             Button {
                 beginEdit(reminder)
             } label: {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
-                        if reminder.isPinned {
-                            Image(systemName: "pin.fill")
-                                .font(.caption2)
-                                .foregroundStyle(.orange)
-                                .accessibilityLabel("已置顶")
-                        }
-                        Text(reminder.title)
-                            .font(.body)
-                            .foregroundStyle(isEditing ? Color.indigo : .primary)
-                            .lineLimit(2)
-                    }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(reminder.title)
+                        .font(.body)
+                        .foregroundStyle(isEditing ? Color.indigo : .primary)
+                        .lineLimit(2)
+                        .accessibilityLabel(reminder.isPinned ? "\(reminder.title)，已置顶" : reminder.title)
                     if let schedule = reminder.schedule {
-                        Label(schedule.displayText, systemImage: "clock")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .labelStyle(.titleAndIcon)
+                        scheduleChip(schedule)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -206,27 +268,91 @@ struct ContentView: View {
             }
             .buttonStyle(.plain)
 
-            Divider()
-                .frame(height: 24)
-
             Toggle("实时活动", isOn: Binding(
                 get: { isLive },
                 set: { toggle(reminder, on: $0) }
             ))
             .labelsHidden()
-            .tint(.indigo)
+            .toggleStyle(.switch)
+            .tint(tint)
+            .accessibilityLabel("实时活动")
         }
         .padding(.vertical, 4)
-        .listRowBackground(isEditing ? Color.indigo.opacity(0.08) : nil)
+    }
+
+    /// Compact "time · recurrence" chip rendered below a reminder's title.
+    /// Uses Liquid Glass on iOS 26+, ultraThinMaterial as a fallback.
+    @ViewBuilder
+    private func scheduleChip(_ schedule: ReminderSchedule) -> some View {
+        HStack(spacing: 4) {
+            Text(schedule.timeText)
+                .font(.caption.weight(.medium))
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+            Text("·")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            Text(schedule.recurrenceText)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .modifier(ScheduleChipBackground())
+    }
+
+    private struct ScheduleChipBackground: ViewModifier {
+        func body(content: Content) -> some View {
+            if #available(iOS 26.0, *) {
+                content.glassEffect(in: Capsule())
+            } else {
+                content.background(.ultraThinMaterial, in: Capsule())
+            }
+        }
+    }
+
+    // MARK: - Title + subtitle
+
+    /// Custom principal toolbar content: bold title with a tappable status
+    /// subtitle (active live activity). The subtitle is added/removed from
+    /// the layout normally — the title's reflow is smoothed with a spring
+    /// animation, and the subtitle itself fades + slides from the top.
+    @ViewBuilder
+    private var titleSubtitleStack: some View {
+        let info = titleSubtitle
+        VStack(spacing: 1) {
+            Text("提了个醒")
+                .font(.headline)
+                .foregroundStyle(.primary)
+            if let info {
+                Text(info.text)
+                    .font(.caption2)
+                    .foregroundStyle(info.tint)
+                    .lineLimit(1)
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: .top)),
+                        removal: .opacity
+                    ))
+                    .onTapGesture(perform: info.tap)
+            }
+        }
+        .animation(.smooth(duration: 0.28), value: info?.text)
+    }
+
+    /// Resolved subtitle payload: shown only while a live activity is
+    /// running. Returns `nil` otherwise so the title sits alone at its
+    /// normal vertical center.
+    private var titleSubtitle: (text: String, tint: Color, tap: () -> Void)? {
+        guard let active = reminders.first(where: { $0.id == activeID }) else { return nil }
+        let tint = EmojiGenerator.tint(for: active.emoji ?? EmojiGenerator.emoji(for: active.title))
+        return ("进行中:\(active.title)", tint, { beginEdit(active) })
     }
 
     private var composerBar: some View {
         let isEditing = editingID != nil
         let canSubmit = !composerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 
-        return VStack(spacing: 0) {
-            Divider()
-            HStack(alignment: .center, spacing: 10) {
+        return HStack(alignment: .center, spacing: 10) {
                 Button {
                     composerFocused = false
                     showEmojiPicker = true
@@ -247,6 +373,7 @@ struct ContentView: View {
                         .transition(.scale.combined(with: .opacity))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("选择表情")
                 .animation(.spring(response: 0.35, dampingFraction: 0.6),
                            value: effectiveComposerEmoji)
 
@@ -263,7 +390,7 @@ struct ContentView: View {
                 .frame(minHeight: 44)
                 .background(
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(Color(uiColor: .systemGray6))
+                        .fill(Color.fieldFill)
                 )
 
                 Button {
@@ -276,18 +403,16 @@ struct ContentView: View {
                     trailingIcon(isEditing: isEditing, canSubmit: canSubmit)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(trailingIconAccessibilityLabel(isEditing: isEditing,
+                                                                  canSubmit: canSubmit))
                 .animation(.easeInOut(duration: 0.15), value: canSubmit)
                 .animation(.easeInOut(duration: 0.15), value: composerFocused)
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                Color(uiColor: .systemBackground)
-                    .ignoresSafeArea(edges: .bottom)
-                    .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: -2)
-            )
-            .animation(.easeInOut(duration: 0.18), value: isEditing)
-        }
+        .padding(.top, 8)
+        .padding(.bottom, 8)
+        .background(ComposerBarBackground().ignoresSafeArea(edges: .bottom))
+        .animation(.smooth(duration: 0.2), value: isEditing)
         .sheet(isPresented: $showEmojiPicker) {
             EmojiPickerView(
                 current: effectiveComposerEmoji,
@@ -297,6 +422,18 @@ struct ContentView: View {
                     composerEmoji = picked
                 }
             )
+        }
+    }
+
+    /// Background for the whole composer bar — Liquid Glass on iOS 26+,
+    /// `ultraThinMaterial` as a fallback. No custom shadow/divider.
+    private struct ComposerBarBackground: View {
+        var body: some View {
+            if #available(iOS 26.0, *) {
+                Rectangle().fill(.clear).glassEffect(in: Rectangle())
+            } else {
+                Rectangle().fill(.ultraThinMaterial)
+            }
         }
     }
 
@@ -318,21 +455,31 @@ struct ContentView: View {
         }
     }
 
+    /// Unified 36×36 filled-circle action button. Only the SF Symbol and the
+    /// fill color swap between states so the geometry stays stable.
     @ViewBuilder
     private func trailingIcon(isEditing: Bool, canSubmit: Bool) -> some View {
-        if !canSubmit && composerFocused {
-            // Keyboard dismiss: render inside a filled circle so it visually
-            // matches the size/weight of the filled-circle action icons.
-            Image(systemName: "keyboard.chevron.compact.down")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 36, height: 36)
-                .background(Color.secondary.opacity(0.6), in: Circle())
-        } else {
-            Image(systemName: isEditing ? "checkmark.circle.fill" : "arrow.up.circle.fill")
-                .font(.system(size: 36))
-                .foregroundStyle(canSubmit ? Color.indigo : Color.secondary.opacity(0.5))
-        }
+        let symbol: String = {
+            if canSubmit { return isEditing ? "checkmark" : "arrow.up" }
+            if composerFocused { return "keyboard.chevron.compact.down" }
+            return "arrow.up"
+        }()
+        let fill: Color = canSubmit
+            ? .indigo
+            : Color.secondary.opacity(composerFocused ? 0.6 : 0.35)
+
+        Image(systemName: symbol)
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: 36, height: 36)
+            .background(fill, in: Circle())
+            .contentTransition(.symbolEffect(.replace))
+    }
+
+    private func trailingIconAccessibilityLabel(isEditing: Bool, canSubmit: Bool) -> String {
+        if canSubmit { return isEditing ? "保存修改" : "新建提醒" }
+        if composerFocused { return "收起键盘" }
+        return "新建提醒"
     }
 
     private func cancelEdit() {
@@ -366,7 +513,9 @@ struct ContentView: View {
             composerFocused = false
         } else {
             let new = Reminder(title: trimmed, emoji: composerEmoji)
-            reminders.insert(new, at: 0)
+            withAnimation(.snappy) {
+                reminders.insert(new, at: 0)
+            }
             ReminderStore.save(reminders)
             WidgetCenter.shared.reloadAllTimelines()
             composerText = ""
@@ -390,9 +539,7 @@ struct ContentView: View {
 
     private func togglePin(_ reminder: Reminder) {
         guard let idx = reminders.firstIndex(where: { $0.id == reminder.id }) else { return }
-        var transaction = Transaction()
-        transaction.disablesAnimations = true
-        withTransaction(transaction) {
+        withAnimation(.snappy) {
             reminders[idx].isPinned.toggle()
         }
         ReminderStore.save(reminders)
@@ -457,8 +604,7 @@ struct ContentView: View {
         guard !trimmed.isEmpty else { return }
         let state = TLGXAttributes.ContentState(
             title: trimmed,
-            emoji: reminder.emoji ?? EmojiGenerator.emoji(for: trimmed),
-            subtitle: reminder.schedule?.displayText
+            emoji: reminder.emoji ?? EmojiGenerator.emoji(for: trimmed)
         )
         Task {
             await act.update(ActivityContent(state: state, staleDate: nil))
@@ -504,11 +650,13 @@ struct ContentView: View {
             return
         }
 
-        let attrs = TLGXAttributes(reminderID: reminder.id.uuidString)
+        let attrs = TLGXAttributes(
+            reminderID: reminder.id.uuidString,
+            startedAt: Date()
+        )
         let state = TLGXAttributes.ContentState(
             title: reminder.title,
-            emoji: reminder.emoji ?? EmojiGenerator.emoji(for: reminder.title),
-            subtitle: reminder.schedule?.displayText
+            emoji: reminder.emoji ?? EmojiGenerator.emoji(for: reminder.title)
         )
         do {
             let act = try Activity.request(
@@ -560,4 +708,35 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environmentObject(NotificationDelegate.shared)
+}
+
+// MARK: - Theme
+
+extension Color {
+    /// Background fill for text fields / picker tiles.
+    /// `systemGray6` in light mode is nearly black in dark mode and visually
+    /// collapses into the system background; lift to `systemGray5` in dark.
+    static let fieldFill = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark ? .systemGray5 : .systemGray6
+    })
+
+    /// Opaque card fill for reminder rows. Solid color (no blur / no shadow)
+    /// so plain-list scrolling stays at 120fps. Pushed one step lighter in dark
+    /// mode (`tertiarySystemBackground` #2C2C2E) so cards visibly float over
+    /// the pure-black page background.
+    static let cardFill = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor.tertiarySystemBackground
+            : UIColor.systemBackground
+    })
+
+    /// Page background sitting behind the reminder cards. Intentionally one
+    /// step darker than the card so the two layers separate clearly:
+    /// - light: `systemGray5` (#E5E5EA) under white cards
+    /// - dark:  `systemBackground` (#000000) under #2C2C2E cards
+    static let pageFill = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor.systemBackground
+            : UIColor.systemGray5
+    })
 }

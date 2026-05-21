@@ -70,7 +70,7 @@ struct EmojiPickerView: View {
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color(uiColor: .systemGray6))
+                        .fill(Color.fieldFill)
                 )
             }
             .buttonStyle(.plain)
@@ -96,7 +96,7 @@ struct EmojiPickerView: View {
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                                     .fill(isSelected(emoji)
                                           ? Color.indigo.opacity(0.18)
-                                          : Color(uiColor: .systemGray6))
+                                          : Color.fieldFill)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)

@@ -8,6 +8,8 @@ import WidgetKit
 
 struct ReminderEntry: TimelineEntry {
     let date: Date
+    /// The single reminder the user picked in the widget configuration, or
+    /// `nil` when nothing is selected yet.
     let reminder: Reminder?
 }
 
@@ -25,13 +27,13 @@ struct ReminderProvider: AppIntentTimelineProvider {
         return Timeline(entries: [entry], policy: .never)
     }
 
+    /// Re-hydrate the picked entity ID against the latest `ReminderStore`
+    /// snapshot so renamed / re-emojied reminders show up-to-date text in
+    /// the widget. Returns `nil` when the user hasn't picked anything yet so
+    /// the widget shows its empty / call-to-action state.
     private func resolve(_ configuration: SelectReminderIntent) -> Reminder? {
-        let all = ReminderStore.load()
-        if let id = configuration.reminder?.id,
-           let match = all.first(where: { $0.id == id }) {
-            return match
-        }
-        return all.first
+        guard let id = configuration.reminder?.id else { return nil }
+        return ReminderStore.load().first(where: { $0.id == id })
     }
 }
 
@@ -39,83 +41,61 @@ struct ReminderWidgetView: View {
     var entry: ReminderEntry
     @Environment(\.widgetFamily) private var family
 
-    /// Resolve the emoji for a reminder: user-picked override first,
-    /// otherwise fall back to `EmojiGenerator`'s keyword auto-detection.
     private func emoji(for r: Reminder) -> String {
         r.emoji ?? EmojiGenerator.emoji(for: r.title)
     }
 
+    private func line(for r: Reminder) -> String {
+        "\(emoji(for: r)) \(r.title)"
+    }
+
     var body: some View {
         if let r = entry.reminder {
-            switch family {
-            case .accessoryInline:
-                // 锁屏顶部一行文本（不支持多行、不支持自定义颜色）
-                Text("\(emoji(for: r)) \(r.title)")
-
-            case .accessoryCircular:
-                // 锁屏圆形：只能塞极少量信息
-                ZStack {
-                    AccessoryWidgetBackground()
-                    Text(emoji(for: r))
-                        .font(.system(size: 22))
-                        .minimumScaleFactor(0.5)
-                        .padding(4)
-                }
-
-            case .accessoryRectangular:
-                // 锁屏长条：可显示 2-3 行
-                HStack(alignment: .center, spacing: 8) {
-                    Text(emoji(for: r))
-                        .font(.system(size: 22))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("提醒")
-                            .font(.caption2)
-                            .widgetAccentable()
-                        Text(r.title)
-                            .font(.headline)
-                            .lineLimit(2)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            default:
-                // 主屏 small / medium
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(emoji(for: r))
-                        .font(.system(size: 28))
-                    Text(r.title)
-                        .font(.headline)
-                        .lineLimit(family == .systemSmall ? 5 : 3)
-                    Spacer(minLength: 0)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            content(for: r)
         } else {
-            switch family {
-            case .accessoryInline:
-                Text("点击选择提醒")
-            case .accessoryCircular:
-                ZStack {
-                    AccessoryWidgetBackground()
-                    Image(systemName: "hand.tap")
-                }
-            case .accessoryRectangular:
-                Text("长按编辑选择提醒")
-                    .font(.footnote)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            default:
-                VStack(spacing: 6) {
-                    Image(systemName: "hand.tap")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                    Text("长按编辑\n选择要显示的提醒")
-                        .font(.footnote)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
+            emptyState
         }
+    }
+
+    // MARK: - Content per family
+
+    @ViewBuilder
+    private func content(for r: Reminder) -> some View {
+        switch family {
+        case .systemSmall:
+            Text(line(for: r))
+                .font(.system(.title3, design: .rounded).weight(.semibold))
+                .multilineTextAlignment(.center)
+                .lineLimit(4)
+                .minimumScaleFactor(0.6)
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+        default:
+            Text(line(for: r))
+                .font(.system(.title2, design: .rounded).weight(.semibold))
+                .multilineTextAlignment(.center)
+                .lineLimit(3)
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    // MARK: - Empty state
+
+    @ViewBuilder
+    private var emptyState: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "hand.tap")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+            Text("长按编辑\n选择要显示的提醒")
+                .font(.footnote)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -129,16 +109,40 @@ struct TLGXReminderWidget: Widget {
             provider: ReminderProvider()
         ) { entry in
             ReminderWidgetView(entry: entry)
-                .containerBackground(.background, for: .widget)
+                .containerBackground(for: .widget) {
+                    WidgetBackground(entry: entry)
+                }
         }
-        .configurationDisplayName("提了个醒")
-        .description("长按小组件选择要显示的提醒。")
+        .configurationDisplayName("提醒卡片")
+        .description("把一条提醒放上桌面。")
         .supportedFamilies([
             .systemSmall,
-            .systemMedium,
-            .accessoryCircular,
-            .accessoryRectangular,
-            .accessoryInline
+            .systemMedium
         ])
+    }
+}
+
+/// Container background for the home-screen widget. Uses a subtle diagonal
+/// gradient tinted by the picked reminder's emoji color so different
+/// reminders look visually distinct on the Home Screen.
+private struct WidgetBackground: View {
+    let entry: ReminderEntry
+    @Environment(\.widgetFamily) private var family
+
+    var body: some View {
+        let tint = entry.reminder.map { r in
+            EmojiGenerator.tint(for: r.emoji ?? EmojiGenerator.emoji(for: r.title))
+        } ?? .gray
+
+        switch family {
+        case .systemSmall, .systemMedium:
+            LinearGradient(
+                colors: [tint.opacity(0.18), tint.opacity(0.04)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        default:
+            Color.clear.background(.background)
+        }
     }
 }

@@ -15,6 +15,10 @@ struct TLGXApp: App {
         // Install the notification delegate as early as possible so that
         // taps on cold-start notifications are delivered to us.
         NotificationDelegate.shared.register()
+
+        // Wire up iCloud key-value sync. Safe to call when the user is
+        // signed out of iCloud — NSUbiquitousKeyValueStore just no-ops.
+        ReminderCloudSync.bootstrap()
     }
 
     var body: some Scene {

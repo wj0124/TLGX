@@ -45,6 +45,8 @@
 			membershipExceptions = (
 				EmojiGenerator.swift,
 				EndActivityIntent.swift,
+				Reminder.swift,
+				TLGXAttributes.swift,
 			);
 			target = B01000000000000000000003 /* TLGXWidgetExtension */;
 		};

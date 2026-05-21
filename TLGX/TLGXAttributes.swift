@@ -12,9 +12,9 @@ struct TLGXAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var title: String
         var emoji: String
-        /// Optional secondary line, e.g. "每天 14:00".
-        var subtitle: String?
     }
 
     var reminderID: String
+    /// When the Live Activity was started; drives the elapsed-time subtitle.
+    var startedAt: Date
 }

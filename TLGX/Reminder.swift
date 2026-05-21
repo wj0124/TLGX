@@ -14,6 +14,37 @@ struct ReminderSchedule: Codable, Hashable {
     var weekdays: Set<Int>
     /// Optional custom push body; nil falls back to the reminder's title.
     var pushText: String?
+
+    /// Next trigger date strictly after `now`. Returns `nil` only on extreme
+    /// calendar errors. For one-shot schedules (`weekdays` empty), returns the
+    /// next occurrence of `hour:minute` (today if not yet passed, else
+    /// tomorrow). For recurring schedules, scans up to 8 days ahead and picks
+    /// the first day whose weekday is in `weekdays`.
+    func nextTriggerDate(after now: Date = Date()) -> Date? {
+        let cal = Calendar.current
+        if weekdays.isEmpty {
+            var comps = cal.dateComponents([.year, .month, .day], from: now)
+            comps.hour = hour
+            comps.minute = minute
+            comps.second = 0
+            guard let candidate = cal.date(from: comps) else { return nil }
+            return candidate > now
+                ? candidate
+                : cal.date(byAdding: .day, value: 1, to: candidate)
+        }
+        for offset in 0...7 {
+            guard let day = cal.date(byAdding: .day, value: offset, to: now) else { continue }
+            let weekday = cal.component(.weekday, from: day)
+            guard weekdays.contains(weekday) else { continue }
+            var comps = cal.dateComponents([.year, .month, .day], from: day)
+            comps.hour = hour
+            comps.minute = minute
+            comps.second = 0
+            guard let candidate = cal.date(from: comps) else { continue }
+            if candidate > now { return candidate }
+        }
+        return nil
+    }
 }
 
 struct Reminder: Identifiable, Codable, Hashable {
@@ -54,7 +85,13 @@ struct Reminder: Identifiable, Codable, Hashable {
 
 enum ReminderStore {
     static let appGroupID = "group.tixingwo"
-    private static let remindersKey = "tlgx.reminders.v1"
+    static let remindersKey = "tlgx.reminders.v1"
+    static let updatedAtKey = "tlgx.reminders.updatedAt"
+
+    /// Posted on the main thread whenever iCloud delivers a remote change
+    /// that we merged into local storage. Observers (e.g. the list view in
+    /// `ContentView`) should reload from `load()` and refresh widgets.
+    static let didChangeRemotelyNotification = Notification.Name("ReminderStore.didChangeRemotely")
 
     static var defaults: UserDefaults {
         UserDefaults(suiteName: appGroupID) ?? .standard
@@ -68,9 +105,18 @@ enum ReminderStore {
         return items
     }
 
+    /// Persist `items` locally and mirror them to iCloud Key-Value storage
+    /// so other devices on the same Apple ID can pick up the change.
     static func save(_ items: [Reminder]) {
-        if let data = try? JSONEncoder().encode(items) {
-            defaults.set(data, forKey: remindersKey)
-        }
+        guard let data = try? JSONEncoder().encode(items) else { return }
+        let stamp = Date().timeIntervalSince1970
+
+        defaults.set(data, forKey: remindersKey)
+        defaults.set(stamp, forKey: updatedAtKey)
+
+        let kv = NSUbiquitousKeyValueStore.default
+        kv.set(data, forKey: remindersKey)
+        kv.set(stamp, forKey: updatedAtKey)
+        kv.synchronize()
     }
 }

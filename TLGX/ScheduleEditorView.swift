@@ -17,6 +17,7 @@ struct ScheduleEditorView: View {
     @State private var time: Date
     @State private var weekdays: Set<Int>
     @State private var pushText: String
+    @State private var confirmingClear: Bool = false
 
     init(reminderTitle: String,
          initialSchedule: ReminderSchedule?,
@@ -30,7 +31,7 @@ struct ScheduleEditorView: View {
         let cal = Calendar.current
         let now = Date()
         let initialHour = initialSchedule?.hour ?? cal.component(.hour, from: now)
-        let initialMinute = initialSchedule?.minute ?? 0
+        let initialMinute = initialSchedule?.minute ?? cal.component(.minute, from: now)
         let base = cal.date(bySettingHour: initialHour, minute: initialMinute, second: 0, of: now) ?? now
         _time = State(initialValue: base)
         _weekdays = State(initialValue: initialSchedule?.weekdays ?? [])
@@ -45,7 +46,8 @@ struct ScheduleEditorView: View {
                                selection: $time,
                                displayedComponents: .hourAndMinute)
                     .datePickerStyle(.wheel)
-                    .frame(maxHeight: 160)
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
 
                 Section("重复") {
@@ -67,7 +69,7 @@ struct ScheduleEditorView: View {
                 if initialSchedule != nil {
                     Section {
                         Button(role: .destructive) {
-                            onSave(nil)
+                            confirmingClear = true
                         } label: {
                             HStack {
                                 Spacer()
@@ -78,8 +80,16 @@ struct ScheduleEditorView: View {
                     }
                 }
             }
-            .navigationTitle("提醒时间")
+            .navigationTitle(reminderTitle)
             .navigationBarTitleDisplayMode(.inline)
+            .alert("清除提醒时间？", isPresented: $confirmingClear) {
+                Button("取消", role: .cancel) { }
+                Button("清除", role: .destructive) {
+                    onSave(nil)
+                }
+            } message: {
+                Text("将一并清空时间、重复周期和推送文案。")
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消", action: onCancel)
@@ -105,13 +115,19 @@ struct ScheduleEditorView: View {
 
     // MARK: - Pieces
 
-    private static let weekdayLabels = ["日", "一", "二", "三", "四", "五", "六"]
+    /// Display order: Monday…Sunday (Chinese convention). Calendar's
+    /// `weekday` integers are 1=Sunday…7=Saturday, so each chip's display
+    /// index is mapped to the underlying Calendar value via `weekdayValues`.
+    private static let weekdayLabels = ["一", "二", "三", "四", "五", "六", "日"]
+    private static let weekdayValues = [2, 3, 4, 5, 6, 7, 1]
 
     private var weekdayChips: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             ForEach(0..<7, id: \.self) { i in
-                let weekday = i + 1
+                let weekday = Self.weekdayValues[i]
                 let isOn = weekdays.contains(weekday)
+                let isWeekend = (i == 5 || i == 6)
+                let tint: Color = isWeekend ? .orange : .indigo
                 Button {
                     if isOn {
                         weekdays.remove(weekday)
@@ -119,20 +135,37 @@ struct ScheduleEditorView: View {
                         weekdays.insert(weekday)
                     }
                 } label: {
-                    Text(Self.weekdayLabels[i])
-                        .font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 34)
-                        .background(
-                            isOn ? Color.indigo : Color.secondary.opacity(0.15),
-                            in: Capsule()
-                        )
-                        .foregroundStyle(isOn ? Color.white : Color.primary)
+                    weekdayChipLabel(text: Self.weekdayLabels[i],
+                                     isOn: isOn,
+                                     tint: tint)
                 }
                 .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
             }
         }
         .padding(.vertical, 4)
+    }
+
+    /// Circular day-pip chip à la system Reminders. Selected state is filled
+    /// with the per-day tint (weekday = indigo, weekend = orange); on
+    /// iOS 26+ that fill is rendered through Liquid Glass for depth.
+    @ViewBuilder
+    private func weekdayChipLabel(text: String, isOn: Bool, tint: Color) -> some View {
+        let size: CGFloat = 36
+        let label = Text(text)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(isOn ? Color.white : Color.primary)
+            .frame(width: size, height: size)
+
+        if isOn {
+            if #available(iOS 26.0, *) {
+                label.glassEffect(.regular.tint(tint), in: Circle())
+            } else {
+                label.background(Circle().fill(tint))
+            }
+        } else {
+            label.background(Circle().fill(Color.secondary.opacity(0.12)))
+        }
     }
 
     private var presetRow: some View {
@@ -168,23 +201,23 @@ struct ScheduleEditorView: View {
 // MARK: - Schedule display helper
 
 extension ReminderSchedule {
-    /// Human-readable summary like "每天 19:00" or "周一、三、五 08:30".
-    var displayText: String {
-        let time = String(format: "%02d:%02d", hour, minute)
-        let prefix: String
-        if weekdays.isEmpty {
-            prefix = "只一次"
-        } else if weekdays == Set(1...7) {
-            prefix = "每天"
-        } else if weekdays == [2, 3, 4, 5, 6] {
-            prefix = "工作日"
-        } else if weekdays == [1, 7] {
-            prefix = "周末"
-        } else {
-            let names = ["日", "一", "二", "三", "四", "五", "六"]
-            let parts = weekdays.sorted().map { names[$0 - 1] }
-            prefix = "周" + parts.joined(separator: "、")
-        }
-        return "\(prefix) \(time)"
+    /// Formatted clock time, e.g. "08:30".
+    var timeText: String {
+        String(format: "%02d:%02d", hour, minute)
+    }
+
+    /// Recurrence summary, e.g. "工作日" / "每天" / "只一次" / "周一、三、五".
+    var recurrenceText: String {
+        if weekdays.isEmpty { return "只一次" }
+        if weekdays == Set(1...7) { return "每天" }
+        if weekdays == [2, 3, 4, 5, 6] { return "工作日" }
+        if weekdays == [1, 7] { return "周末" }
+        // Display order: Mon…Sun (Chinese convention).
+        let displayOrder = [2, 3, 4, 5, 6, 7, 1]
+        let names = [2: "一", 3: "二", 4: "三", 5: "四", 6: "五", 7: "六", 1: "日"]
+        let parts = displayOrder
+            .filter { weekdays.contains($0) }
+            .compactMap { names[$0] }
+        return "周" + parts.joined(separator: "、")
     }
 }
