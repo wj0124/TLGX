@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct EmojiPickerView: View {
     /// Current effective emoji (auto-detected or user-overridden).
@@ -32,8 +33,8 @@ struct EmojiPickerView: View {
             .navigationTitle("选择表情")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("关闭") { dismiss() }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完成") { dismiss() }
                 }
             }
         }
@@ -47,8 +48,8 @@ struct EmojiPickerView: View {
                 .foregroundStyle(.secondary)
 
             Button {
+                selectionHaptic()
                 onSelect(nil)
-                dismiss()
             } label: {
                 HStack(spacing: 12) {
                     Text(autoEmoji)
@@ -62,15 +63,18 @@ struct EmojiPickerView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    if !isOverridden {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.indigo)
-                    }
                 }
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color.fieldFill)
+                        .fill(isOverridden
+                              ? Color.fieldFill
+                              : Color.indigo.opacity(0.18))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(isOverridden ? Color.clear : Color.indigo,
+                                lineWidth: 1.5)
                 )
             }
             .buttonStyle(.plain)
@@ -86,8 +90,8 @@ struct EmojiPickerView: View {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(EmojiGenerator.pickerEmojis, id: \.self) { emoji in
                     Button {
+                        selectionHaptic()
                         onSelect(emoji)
-                        dismiss()
                     } label: {
                         Text(emoji)
                             .font(.system(size: 28))
@@ -112,5 +116,9 @@ struct EmojiPickerView: View {
 
     private func isSelected(_ emoji: String) -> Bool {
         isOverridden && emoji == current
+    }
+
+    private func selectionHaptic() {
+        UISelectionFeedbackGenerator().selectionChanged()
     }
 }

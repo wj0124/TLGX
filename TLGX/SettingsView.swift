@@ -18,10 +18,15 @@ struct SettingsView: View {
     // while the sheet is open, without re-rendering on every tick.
     @State private var relativeTimeTick = 0
 
+    @StateObject private var iconManager = AppIconManager.shared
+    @AppStorage(AppearanceStorageKey.mode) private var appearanceRaw = AppearanceMode.system.rawValue
+
     var body: some View {
         NavigationStack {
             List {
                 iCloudSection
+                appearanceSection
+                appIconSection
             }
             .listStyle(.insetGrouped)
             .navigationTitle("设置")
@@ -53,6 +58,7 @@ struct SettingsView: View {
                 }
             }
         }
+        .appAppearance()
     }
 
     // MARK: - iCloud
@@ -142,6 +148,91 @@ struct SettingsView: View {
                 isSyncing = false
             }
         }
+    }
+
+    // MARK: - App Icon
+
+    private var appearanceSection: some View {
+        let current = AppearanceMode(rawValue: appearanceRaw) ?? .system
+        return Section {
+            Picker(selection: Binding(
+                get: { AppearanceMode(rawValue: appearanceRaw) ?? .system },
+                set: { appearanceRaw = $0.rawValue }
+            )) {
+                ForEach(AppearanceMode.allCases) { mode in
+                    Label(mode.displayName, systemImage: mode.symbolName)
+                        .tag(mode)
+                }
+            } label: {
+                Label("外观", systemImage: current.symbolName)
+            }
+            .pickerStyle(.menu)
+        } header: {
+            Text("外观")
+        } footer: {
+            Text("设置只生效于当前设备，不同步到其他设备。")
+        }
+    }
+
+    private var appIconSection: some View {
+        Section {
+            HStack(spacing: 16) {
+                ForEach(iconManager.options) { option in
+                    iconTile(option)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 6)
+            .disabled(!iconManager.supportsAlternateIcons)
+        } header: {
+            Text("App 图标")
+        } footer: {
+            if iconManager.supportsAlternateIcons {
+                Text("切换后主屏、Spotlight、设置里的 App 图标会马上更新。桌面小组件与实时活动仍然使用主图标。")
+            } else {
+                Text("当前设备或环境不支持切换 App 图标。")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func iconTile(_ option: AppIconOption) -> some View {
+        let isSelected = iconManager.currentKey == option.key
+        Button {
+            Task { await switchIcon(to: option.key) }
+        } label: {
+            VStack(spacing: 8) {
+                Group {
+                    if let image = iconManager.previewImage(for: option) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        Color(.systemGray5)
+                    }
+                }
+                .frame(width: 60, height: 60)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                // 用极轻的投影把图标从列表底色里"托"起来，白底图标也能看清轮廓，
+                // 又不会像描边那样被误以为是选中状态。
+                .shadow(color: .black.opacity(0.18), radius: 4, x: 0, y: 2)
+
+                // 选中提示放在图标下方，避免被当成图标的一部分。
+                // 未选中时用同尺寸占位，保证两种状态布局不抖动。
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.footnote)
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.35))
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(option.displayName)
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    private func switchIcon(to key: String?) async {
+        guard let option = iconManager.options.first(where: { $0.key == key }) else { return }
+        try? await iconManager.apply(option)
     }
 }
 

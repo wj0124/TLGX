@@ -5,9 +5,46 @@
 
 import ActivityKit
 import SwiftUI
+import TipKit
+import UIKit
 import UserNotifications
 import WidgetKit
 
+/// Onboarding tip teaching long-press → copy / share. TipKit manages
+/// display rules and dismiss state automatically.
+struct ContextMenuTip: Tip {
+    var title: Text { Text("长按提醒") }
+    var message: Text? { Text("可复制内容或分享到其他 App") }
+    var image: Image? { Image(systemName: "hand.tap") }
+}
+/// Tip teaching that the composer's emoji button is tappable. Only shows
+/// after the user has activated the composer (keyboard) at least once,
+/// so the onboarding flow isn't interrupted.
+struct EmojiButtonTip: Tip {
+    @Parameter static var hasOpenedComposer: Bool = false
+
+    var title: Text { Text("自定表情") }
+    var message: Text? { Text("点这里挑一个 emoji，或保持自动匹配") }
+    var image: Image? { Image(systemName: "face.smiling") }
+
+    var rules: [Rule] {
+        #Rule(Self.$hasOpenedComposer) { $0 == true }
+    }
+}
+
+/// Tip shown the first time the user starts a Live Activity, guiding
+/// them to check the lock screen / Dynamic Island.
+struct LiveActivityTip: Tip {
+    @Parameter static var hasStartedLiveActivity: Bool = false
+
+    var title: Text { Text("已开启实时活动") }
+    var message: Text? { Text("已显示在锁屏") }
+    var image: Image? { Image(systemName: "lock.iphone") }
+
+    var rules: [Rule] {
+        #Rule(Self.$hasStartedLiveActivity) { $0 == true }
+    }
+}
 struct ContentView: View {
     @EnvironmentObject private var notifications: NotificationDelegate
 
@@ -37,6 +74,14 @@ struct ContentView: View {
 
     /// Controls the Settings sheet (iCloud sync + future toggles).
     @State private var showSettings: Bool = false
+    @State private var showCopiedToast: Bool = false
+
+    /// TipKit-managed onboarding tip for long-press context menu.
+    private let contextMenuTip = ContextMenuTip()
+    /// TipKit-managed tip pointing at the composer's emoji button.
+    private let emojiButtonTip = EmojiButtonTip()
+    /// TipKit-managed tip shown after the user starts their first Live Activity.
+    private let liveActivityTip = LiveActivityTip()
 
     var body: some View {
         NavigationStack {
@@ -44,7 +89,13 @@ struct ContentView: View {
                 if reminders.isEmpty {
                     emptyState
                 } else {
-                    list
+                    VStack(spacing: 0) {
+                        TipView(contextMenuTip)
+                            .tipBackground(Color.indigo.opacity(0.08))
+                            .padding(.horizontal, 20)
+                            .padding(.top, 6)
+                        list
+                    }
                 }
             }
             .navigationTitle("")
@@ -116,9 +167,11 @@ struct ContentView: View {
                         editingScheduleReminder = nil
                     }
                 )
+                .appAppearance()
             }
             .sheet(isPresented: $showAbout) {
                 AboutView()
+                    .appAppearance()
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
@@ -128,6 +181,9 @@ struct ContentView: View {
             reminders = ReminderStore.load()
             syncWithSystem()
             handlePendingReminder()
+        }
+        .onChange(of: composerFocused) { _, focused in
+            if focused { EmojiButtonTip.hasOpenedComposer = true }
         }
         .onChange(of: notifications.pendingReminderID) { _, _ in
             handlePendingReminder()
@@ -139,19 +195,35 @@ struct ContentView: View {
             // the in-memory list so the UI reflects the merged state.
             reminders = ReminderStore.load()
         }
+        // 必须应用在 body 内部（而不是从 WindowGroup 包裹外层）：外观
+        // modifier 在 .system / 显式主题之间切换时会改变输出视图类型，如
+        // 果包在外层会让 ContentView 本身身份失效、所有 @State 重
+        // 置（包括 showSettings），导致 sheet 被意外关闭。
+        .appAppearance()
     }
 
     // MARK: - Subviews
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             Text("还没有提醒")
-                .font(.headline)
+                .font(.title3.weight(.semibold))
             Text("在下方输入框新建一条")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func showCopiedToastBriefly() {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            showCopiedToast = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            withAnimation(.easeOut(duration: 0.25)) {
+                showCopiedToast = false
+            }
+        }
     }
 
     private var list: some View {
@@ -164,6 +236,7 @@ struct ContentView: View {
                             .id(reminder.id)
                             .listRowBackground(rowBackground(for: reminder))
                             .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
                             .swipeActions(edge: .leading, allowsFullSwipe: false) {
                                 Button {
                                     togglePin(reminder)
@@ -185,6 +258,18 @@ struct ContentView: View {
                                     delete(reminder)
                                 } label: {
                                     Label("删除", systemImage: "trash")
+                                }
+                            }
+                            .contextMenu {
+                                Button {
+                                    UIPasteboard.general.string = reminder.title
+                                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                                    showCopiedToastBriefly()
+                                } label: {
+                                    Label("复制到剪贴板", systemImage: "doc.on.doc")
+                                }
+                                ShareLink(item: reminder.title) {
+                                    Label("分享", systemImage: "square.and.arrow.up")
                                 }
                             }
                     }
@@ -219,18 +304,15 @@ struct ContentView: View {
             .map(\.element)
     }
 
-    /// State-aware row background: encodes "currently live / being edited /
-    /// pinned" as a quiet tinted wash so the user can scan status without
-    /// extra UI affordances. Falls back to transparent for the common case.
+    /// State-aware row background: encodes "currently live / pinned" as a
+    /// quiet tinted wash so the user can scan status without extra UI
+    /// affordances. Falls back to transparent for the common case.
     private func rowBackground(for reminder: Reminder) -> Color {
         if activeID == reminder.id {
             let tint = EmojiGenerator.tint(for: reminder.emoji ?? EmojiGenerator.emoji(for: reminder.title))
             return tint.opacity(0.12)
         }
         if reminder.isPinned {
-            // Neutral, non-colored wash so pinned items read as "slightly
-            // raised" against the plain list background, without competing
-            // with the live/editing accent colors.
             return Color.primary.opacity(0.06)
         }
         return .clear
@@ -244,20 +326,20 @@ struct ContentView: View {
         let displayEmoji = reminder.emoji ?? EmojiGenerator.emoji(for: reminder.title)
         let tint = EmojiGenerator.tint(for: displayEmoji)
 
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: 14) {
             Text(displayEmoji)
-                .font(.system(size: 24))
-                .frame(width: 36, height: 36)
+                .font(.system(size: 30))
+                .frame(width: 50, height: 50)
                 .background(Circle().fill(tint.opacity(0.3)))
 
             Button {
                 beginEdit(reminder)
             } label: {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text(reminder.title)
-                        .font(.body)
+                        .font(.title3)
                         .foregroundStyle(isEditing ? Color.indigo : .primary)
-                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                         .accessibilityLabel(reminder.isPinned ? "\(reminder.title)，已置顶" : reminder.title)
                     if let schedule = reminder.schedule {
                         scheduleChip(schedule)
@@ -268,36 +350,46 @@ struct ContentView: View {
             }
             .buttonStyle(.plain)
 
-            Toggle("实时活动", isOn: Binding(
-                get: { isLive },
-                set: { toggle(reminder, on: $0) }
-            ))
+            Group {
+                if isLive {
+                    Toggle("实时活动", isOn: Binding(
+                        get: { isLive },
+                        set: { toggle(reminder, on: $0) }
+                    ))
+                    .popoverTip(liveActivityTip)
+                } else {
+                    Toggle("实时活动", isOn: Binding(
+                        get: { isLive },
+                        set: { toggle(reminder, on: $0) }
+                    ))
+                }
+            }
             .labelsHidden()
             .toggleStyle(.switch)
             .tint(tint)
             .accessibilityLabel("实时活动")
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 
     /// Compact "time · recurrence" chip rendered below a reminder's title.
     /// Uses Liquid Glass on iOS 26+, ultraThinMaterial as a fallback.
     @ViewBuilder
     private func scheduleChip(_ schedule: ReminderSchedule) -> some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 5) {
             Text(schedule.timeText)
-                .font(.caption.weight(.medium))
+                .font(.footnote)
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
             Text("·")
-                .font(.caption2)
+                .font(.footnote)
                 .foregroundStyle(.tertiary)
             Text(schedule.recurrenceText)
-                .font(.caption2)
+                .font(.footnote)
                 .foregroundStyle(.tertiary)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
         .modifier(ScheduleChipBackground())
     }
 
@@ -320,13 +412,13 @@ struct ContentView: View {
     @ViewBuilder
     private var titleSubtitleStack: some View {
         let info = titleSubtitle
-        VStack(spacing: 1) {
+        VStack(spacing: 2) {
             Text("提了个醒")
-                .font(.headline)
+                .font(.headline.weight(.semibold))
                 .foregroundStyle(.primary)
             if let info {
                 Text(info.text)
-                    .font(.caption2)
+                    .font(.footnote.weight(.medium))
                     .foregroundStyle(info.tint)
                     .lineLimit(1)
                     .transition(.asymmetric(
@@ -343,6 +435,9 @@ struct ContentView: View {
     /// running. Returns `nil` otherwise so the title sits alone at its
     /// normal vertical center.
     private var titleSubtitle: (text: String, tint: Color, tap: () -> Void)? {
+        if showCopiedToast {
+            return ("已复制到剪贴板", .green, {})
+        }
         guard let active = reminders.first(where: { $0.id == activeID }) else { return nil }
         let tint = EmojiGenerator.tint(for: active.emoji ?? EmojiGenerator.emoji(for: active.title))
         return ("进行中:\(active.title)", tint, { beginEdit(active) })
@@ -376,6 +471,7 @@ struct ContentView: View {
                 .accessibilityLabel("选择表情")
                 .animation(.spring(response: 0.35, dampingFraction: 0.6),
                            value: effectiveComposerEmoji)
+                .popoverTip(emojiButtonTip)
 
                 TextField(
                     isEditing ? "修改提醒内容" : "新建提醒…",
@@ -422,6 +518,7 @@ struct ContentView: View {
                     composerEmoji = picked
                 }
             )
+            .appAppearance()
         }
     }
 
@@ -615,6 +712,7 @@ struct ContentView: View {
         Task {
             if on {
                 await startActivity(for: reminder)
+                LiveActivityTip.hasStartedLiveActivity = true
             } else if activeID == reminder.id {
                 await endActivity()
             }

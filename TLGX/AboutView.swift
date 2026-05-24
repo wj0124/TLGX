@@ -2,44 +2,36 @@
 //  AboutView.swift
 //  TLGX
 //
-//  Privacy promise, usage tips, and contact info. All content is hard-coded,
-//  no network requests, no analytics.
+//  Privacy promise, usage tips, and contact info. UI 排版参考 iOS 系统
+//  「设置 - 蓝牙 - 设备详情」：顶部居中的大图标 + 名称 + 版本，下面是
+//  一组 inset-grouped 列表，key-value 行 / 链接行。
 //
 
 import SwiftUI
 
 struct AboutView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
+    @ObservedObject private var iconManager = AppIconManager.shared
 
     private let contactEmail = "w2287307@gmail.com"
 
-    private var appVersion: String {
-        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "v\(v) (\(b))"
+    private var appVersionShort: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     }
-
-    private var appName: String {
-        Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String
-            ?? Bundle.main.infoDictionary?["CFBundleName"] as? String
-            ?? "提了个醒"
+    private var appBuild: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
     }
+    private var appVersionFull: String { "\(appVersionShort) (\(appBuild))" }
 
     var body: some View {
         NavigationStack {
             List {
-                heroSection
+                headerSection
                 privacySection
-                liveActivitySection
                 usageSection
                 contactSection
             }
             .listStyle(.insetGrouped)
-            .listRowSeparator(.hidden)
-            .listSectionSeparator(.hidden)
-            .scrollContentBackground(.hidden)
-            .background(backgroundGradient.ignoresSafeArea())
             .navigationTitle("关于")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -59,155 +51,133 @@ struct AboutView: View {
         }
     }
 
-    // MARK: - Background
+    // MARK: - Header（仿蓝牙详情顶部居中介绍卡）
 
-    private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color(.systemGroupedBackground),
-                Color.indigo.opacity(0.08),
-                Color(.systemGroupedBackground)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-    }
-
-    // MARK: - Hero
-
-    private var heroSection: some View {
+    private var headerSection: some View {
         Section {
-            VStack(spacing: 12) {
-                appIconView
-                    .frame(width: 92, height: 92)
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 6)
+            VStack(alignment: .leading, spacing: 12) {
+                appIconImage
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 56, height: 56)
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
+                    }
 
-                VStack(spacing: 4) {
-                    Text(appName)
-                        .font(.title2.weight(.semibold))
-                    Text(appVersion)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                }
+                Text("提了个醒")
+                    .font(.title.weight(.bold))
 
-                Text("一个安静、不打扰、不耗电的提醒小工具")
-                    .font(.footnote)
+                Text("一款专注个人提醒的轻量 App，支持锁屏实时活动、桌面小组件与 iCloud 同步。")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets())
-            .listRowSeparator(.hidden)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 8)
         }
     }
 
-    @ViewBuilder
-    private var appIconView: some View {
-        if let image = Self.appIconImage() {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-        } else {
-            ZStack {
-                LinearGradient(
-                    colors: [.indigo, .purple],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                Image(systemName: "bell.badge.fill")
-                    .font(.system(size: 40, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .symbolRenderingMode(.hierarchical)
-            }
+    /// 显示当前生效的 App 图标（含切换后的备用图标）。
+    /// 读取 `iconManager.currentKey` 以便切换后 SwiftUI 自动刷新。
+    private var appIconImage: Image {
+        let key = iconManager.currentKey
+        if let key, let ui = UIImage(named: key) {
+            return Image(uiImage: ui)
         }
+        if let ui = AppIconManager.shared.previewImage(for: .init(key: nil, displayName: "", subtitle: "", previewAssetName: nil)) {
+            return Image(uiImage: ui)
+        }
+        return Image(systemName: "app.fill")
     }
 
-    /// Best-effort lookup of the bundled AppIcon (works even when the icon
-    /// is only declared inside Assets.xcassets).
-    private static func appIconImage() -> UIImage? {
-        if let icons = Bundle.main.infoDictionary?["CFBundleIcons"] as? [String: Any],
-           let primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
-           let files = primary["CFBundleIconFiles"] as? [String],
-           let lastName = files.last,
-           let image = UIImage(named: lastName) {
-            return image
-        }
-        return UIImage(named: "AppIcon") ?? UIImage(named: "appicon")
-    }
-
-    // MARK: - Sections
+    // MARK: - 隐私
 
     private var privacySection: some View {
         Section {
-            sectionHeader(icon: "lock.shield.fill",
-                          color: .green,
-                          title: "隐私承诺")
-
-            bullet("提醒数据仅保存在你的设备和你自己的 iCloud 中", color: .green)
-            bullet("iCloud 同步由系统直接完成，作者无法看到你的内容", color: .green)
-            bullet("不收集、不上传任何信息到第三方服务器", color: .green)
-            bullet("没有账号系统、没有广告 SDK、没有数据分析", color: .green)
+            bulletRow("提醒数据仅保存在你的设备和你自己的 iCloud 中")
+            bulletRow("iCloud 同步由系统直接完成，作者无法看到你的内容")
+            bulletRow("不收集、不上传任何信息到第三方服务器")
+            bulletRow("没有账号系统、没有广告 SDK、没有数据分析")
+            bulletRow("通知、实时活动、桌面小组件均由系统本地调度")
+        } header: {
+            Label("隐私承诺", systemImage: "lock.shield.fill")
+                .labelStyle(.titleAndIcon)
+                .foregroundStyle(.green)
         }
+        .listRowSeparator(.hidden)
     }
 
-    private var liveActivitySection: some View {
-        Section {
-            sectionHeader(icon: "bolt.badge.checkmark.fill",
-                          color: .orange,
-                          title: "放心使用")
-
-            bullet("实时活动由系统统一调度，App 不会一直在后台运行", color: .orange)
-            bullet("几乎不耗电：显示与刷新都由系统接管", color: .orange)
-            bullet("即使 App 被划掉杀死，锁屏与灵动岛上的提醒依然正常显示", color: .orange)
-            bullet("通知与定时提醒同样由系统本地调度，不依赖 App 是否打开", color: .orange)
-        } footer: {
-            Text("你可以放心划掉 App，提醒不会因此失效。")
+    private func bulletRow(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .font(.footnote)
+                .padding(.top, 3)
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
         }
+        .padding(.vertical, 2)
     }
+
+    // MARK: - 使用说明
 
     private var usageSection: some View {
         Section {
-            sectionHeader(icon: "hand.tap.fill",
-                          color: .indigo,
-                          title: "使用说明")
-
-            tipRow(icon: "plus.bubble.fill", color: .indigo,
+            tipRow(icon: "plus.bubble",
                    title: "新建",
                    detail: "在底部输入框写下提醒，点发送即可")
-            tipRow(icon: "pencil", color: .blue,
+            tipRow(icon: "pencil",
                    title: "编辑",
                    detail: "点击任意一条提醒可重新编辑内容")
-            tipRow(icon: "pin.fill", color: .pink,
+            tipRow(icon: "pin",
                    title: "置顶",
                    detail: "向右滑动一条提醒")
-            tipRow(icon: "clock.fill", color: .orange,
+            tipRow(icon: "clock",
                    title: "定时",
                    detail: "向右滑动后点击「时间」可设置每日 / 每周提醒")
-            tipRow(icon: "switch.2", color: .green,
+            tipRow(icon: "switch.2",
                    title: "开启",
                    detail: "右侧开关把提醒推到锁屏与状态栏持续显示")
-            tipRow(icon: "trash.fill", color: .red,
+            tipRow(icon: "trash",
                    title: "删除",
                    detail: "向左滑动一条提醒")
+        } header: {
+            Text("使用说明")
         }
+        .listRowSeparator(.hidden)
     }
+
+    private func tipRow(icon: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .foregroundStyle(.indigo)
+                .frame(width: 24, height: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.medium))
+                Text(detail)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    // MARK: - 联系
 
     private var contactSection: some View {
         Section {
-            Button {
-                openURL(mailURL)
-            } label: {
-                HStack(spacing: 12) {
-                    iconBadge(systemName: "envelope.fill", color: .indigo)
+            Link(destination: mailURL) {
+                HStack {
+                    Image(systemName: "envelope.fill")
+                        .foregroundStyle(.indigo)
+                        .frame(width: 24, height: 24)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("发邮件给作者")
                             .foregroundStyle(.primary)
-                            .font(.subheadline.weight(.medium))
                         Text(contactEmail)
                             .font(.footnote)
                             .foregroundStyle(.secondary)
@@ -217,11 +187,7 @@ struct AboutView: View {
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(.tertiary)
                 }
-                .padding(.vertical, 2)
-                .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
-            .listRowSeparator(.hidden)
         } header: {
             Text("联系作者")
         } footer: {
@@ -236,58 +202,6 @@ struct AboutView: View {
         let encoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? subject
         return URL(string: "mailto:\(contactEmail)?subject=\(encoded)")
             ?? URL(string: "mailto:\(contactEmail)")!
-    }
-
-    private func sectionHeader(icon: String, color: Color, title: String) -> some View {
-        HStack(spacing: 10) {
-            iconBadge(systemName: icon, color: color)
-            Text(title)
-                .font(.headline)
-            Spacer()
-        }
-        .padding(.vertical, 2)
-        .listRowSeparator(.hidden)
-    }
-
-    private func iconBadge(systemName: String, color: Color) -> some View {
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .fill(color.gradient)
-            .frame(width: 30, height: 30)
-            .overlay {
-                Image(systemName: systemName)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-    }
-
-    private func bullet(_ text: String, color: Color) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(color)
-                .imageScale(.small)
-            Text(text)
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.vertical, 2)
-        .listRowSeparator(.hidden)
-    }
-
-    private func tipRow(icon: String, color: Color, title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            iconBadge(systemName: icon, color: color)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline.weight(.medium))
-                Text(detail)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.vertical, 2)
-        .listRowSeparator(.hidden)
     }
 }
 
