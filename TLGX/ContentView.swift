@@ -47,6 +47,12 @@ struct LiveActivityTip: Tip {
 }
 struct ContentView: View {
     @EnvironmentObject private var notifications: NotificationDelegate
+    /// Observed so we can rehydrate from the shared App Group store every
+    /// time the app re-enters the foreground. Necessary because the Share
+    /// Extension may have appended new reminders while we were backgrounded
+    /// — `.onAppear` only fires on initial view mount, so without this
+    /// the list would stay stale until the user force-quits and relaunches.
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var reminders: [Reminder] = []
     @State private var activeID: UUID? = nil
@@ -181,6 +187,10 @@ struct ContentView: View {
             reminders = ReminderStore.load()
             syncWithSystem()
             handlePendingReminder()
+            // Clear any orphan notifications left over from previous
+            // sessions (crashes, cloud downloads, older app versions).
+            let snapshot = reminders
+            Task { await ReminderScheduler.reconcile(with: snapshot) }
         }
         .onChange(of: composerFocused) { _, focused in
             if focused { EmojiButtonTip.hasOpenedComposer = true }
@@ -194,6 +204,23 @@ struct ContentView: View {
             // iCloud delivered an update from another device; rehydrate
             // the in-memory list so the UI reflects the merged state.
             reminders = ReminderStore.load()
+            // The remote snapshot may have removed reminders that still
+            // have local pending notifications. Drop the orphans now so
+            // they don't fire.
+            let snapshot = reminders
+            Task { await ReminderScheduler.reconcile(with: snapshot) }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            // The Share Extension writes directly to the App Group store
+            // while we're backgrounded; reload on foreground so any new
+            // entries appear without requiring a force-quit.
+            guard newPhase == .active else { return }
+            let fresh = ReminderStore.load()
+            guard fresh != reminders else { return }
+            reminders = fresh
+            let snapshot = reminders
+            Task { await ReminderScheduler.reconcile(with: snapshot) }
+            WidgetCenter.shared.reloadAllTimelines()
         }
         // 必须应用在 body 内部（而不是从 WindowGroup 包裹外层）：外观
         // modifier 在 .system / 显式主题之间切换时会改变输出视图类型，如
@@ -326,23 +353,39 @@ struct ContentView: View {
         let displayEmoji = reminder.emoji ?? EmojiGenerator.emoji(for: reminder.title)
         let tint = EmojiGenerator.tint(for: displayEmoji)
 
-        HStack(alignment: .center, spacing: 14) {
+        HStack(alignment: .center, spacing: 12) {
             Text(displayEmoji)
-                .font(.system(size: 30))
-                .frame(width: 50, height: 50)
-                .background(Circle().fill(tint.opacity(0.3)))
+                .font(.system(size: 20))
+                .frame(width: 36, height: 36)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [tint.opacity(0.22), tint.opacity(0.10)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(tint.opacity(0.18), lineWidth: 0.5)
+                )
 
             Button {
                 beginEdit(reminder)
             } label: {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(reminder.title)
-                        .font(.title3)
+                        .font(.body.weight(.medium))
                         .foregroundStyle(isEditing ? Color.indigo : .primary)
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityLabel(reminder.isPinned ? "\(reminder.title)，已置顶" : reminder.title)
                     if let schedule = reminder.schedule {
                         scheduleChip(schedule)
+                    }
+                    if let last = reminder.lastTriggeredAt {
+                        lastTriggeredChip(last)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -369,14 +412,17 @@ struct ContentView: View {
             .tint(tint)
             .accessibilityLabel("实时活动")
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 4)
     }
 
     /// Compact "time · recurrence" chip rendered below a reminder's title.
-    /// Uses Liquid Glass on iOS 26+, ultraThinMaterial as a fallback.
+    /// Minimal, text-only — no background — to keep the row quiet.
     @ViewBuilder
     private func scheduleChip(_ schedule: ReminderSchedule) -> some View {
         HStack(spacing: 5) {
+            Image(systemName: "clock")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
             Text(schedule.timeText)
                 .font(.footnote)
                 .monospacedDigit()
@@ -388,19 +434,28 @@ struct ContentView: View {
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 4)
-        .modifier(ScheduleChipBackground())
     }
 
-    private struct ScheduleChipBackground: ViewModifier {
-        func body(content: Content) -> some View {
-            if #available(iOS 26.0, *) {
-                content.glassEffect(in: Capsule())
-            } else {
-                content.background(.ultraThinMaterial, in: Capsule())
-            }
+    /// "Last triggered" chip rendered below a reminder's title, giving a
+    /// recency hint ("上次 5 分钟前 / 昨天 / 3 天前"). Uses SwiftUI's
+    /// `.relative` date format so the label stays fresh without manual
+    /// timers. Only shown when the reminder has been triggered at least
+    /// once.
+    @ViewBuilder
+    private func lastTriggeredChip(_ date: Date) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: "clock.arrow.circlepath")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            Text("上次")
+                .font(.footnote)
+                .foregroundStyle(.tertiary)
+            Text(date, format: .relative(presentation: .named, unitsStyle: .wide)
+                .locale(Locale(identifier: "zh_CN")))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Title + subtitle
@@ -631,6 +686,10 @@ struct ContentView: View {
         reminders.removeAll { $0.id == reminder.id }
         ReminderStore.save(reminders)
         ReminderScheduler.cancel(reminderID: reminder.id)
+        // Sweep any stragglers (e.g. a schedule() call that was racing
+        // this delete and landed its `center.add` after our cancel).
+        let snapshot = reminders
+        Task { await ReminderScheduler.reconcile(with: snapshot) }
         WidgetCenter.shared.reloadAllTimelines()
     }
 
@@ -765,6 +824,7 @@ struct ContentView: View {
             await MainActor.run {
                 self.activity = act
                 self.activeID = reminder.id
+                self.recordTrigger(for: reminder.id)
             }
             observe(act)
         } catch {
@@ -772,6 +832,17 @@ struct ContentView: View {
                 errorMessage = "启动失败：\(error.localizedDescription)"
             }
         }
+    }
+
+    /// Bump the reminder's `lastTriggeredAt` to now, persist, and refresh
+    /// widgets. Called when the user starts a Live Activity — this is the
+    /// explicit "I'm using this reminder right now" signal we surface in
+    /// the row as a recency hint.
+    private func recordTrigger(for id: UUID) {
+        guard let idx = reminders.firstIndex(where: { $0.id == id }) else { return }
+        reminders[idx].lastTriggeredAt = Date()
+        ReminderStore.save(reminders)
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     private func endActivity() async {

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		B0100000000000000000000B /* TLGXWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B01000000000000000000001 /* TLGXWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C0100000000000000000000A /* TLGXShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C01000000000000000000001 /* TLGXShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -17,6 +18,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = B01000000000000000000003;
 			remoteInfo = TLGXWidgetExtension;
+		};
+		C0100000000000000000000B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A039242A2F99F69E00879030 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C01000000000000000000003;
+			remoteInfo = TLGXShareExtension;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -28,6 +36,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				B0100000000000000000000B /* TLGXWidgetExtension.appex in Embed Foundation Extensions */,
+				C0100000000000000000000A /* TLGXShareExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -37,6 +46,7 @@
 /* Begin PBXFileReference section */
 		A03924322F99F69E00879030 /* TLGX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TLGX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B01000000000000000000001 /* TLGXWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TLGXWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C01000000000000000000001 /* TLGXShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TLGXShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -50,6 +60,20 @@
 			);
 			target = B01000000000000000000003 /* TLGXWidgetExtension */;
 		};
+		C0100000000000000000000D /* Exceptions for "TLGX" folder in "TLGXShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Reminder.swift,
+			);
+			target = C01000000000000000000003 /* TLGXShareExtension */;
+		};
+		C0100000000000000000000E /* Exceptions for "TLGXShareExtension" folder in "TLGXShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C01000000000000000000003 /* TLGXShareExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -57,6 +81,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				B01000000000000000000020 /* Exceptions for "TLGX" folder in "TLGXWidgetExtension" target */,
+				C0100000000000000000000D /* Exceptions for "TLGX" folder in "TLGXShareExtension" target */,
 			);
 			path = TLGX;
 			sourceTree = "<group>";
@@ -64,6 +89,14 @@
 		B01000000000000000000002 /* TLGXWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = TLGXWidget;
+			sourceTree = "<group>";
+		};
+		C01000000000000000000002 /* TLGXShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C0100000000000000000000E /* Exceptions for "TLGXShareExtension" folder in "TLGXShareExtension" target */,
+			);
+			path = TLGXShareExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -83,6 +116,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C01000000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -91,6 +131,7 @@
 			children = (
 				A03924342F99F69E00879030 /* TLGX */,
 				B01000000000000000000002 /* TLGXWidget */,
+				C01000000000000000000002 /* TLGXShareExtension */,
 				A03924332F99F69E00879030 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -100,6 +141,7 @@
 			children = (
 				A03924322F99F69E00879030 /* TLGX.app */,
 				B01000000000000000000001 /* TLGXWidgetExtension.appex */,
+				C01000000000000000000001 /* TLGXShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -120,6 +162,7 @@
 			);
 			dependencies = (
 				B0100000000000000000000C /* PBXTargetDependency */,
+				C0100000000000000000000C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A03924342F99F69E00879030 /* TLGX */,
@@ -151,6 +194,28 @@
 			);
 			productName = TLGXWidgetExtension;
 			productReference = B01000000000000000000001 /* TLGXWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		C01000000000000000000003 /* TLGXShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C01000000000000000000009 /* Build configuration list for PBXNativeTarget "TLGXShareExtension" */;
+			buildPhases = (
+				C01000000000000000000004 /* Sources */,
+				C01000000000000000000005 /* Frameworks */,
+				C01000000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C01000000000000000000002 /* TLGXShareExtension */,
+			);
+			name = TLGXShareExtension;
+			packageProductDependencies = (
+			);
+			productName = TLGXShareExtension;
+			productReference = C01000000000000000000001 /* TLGXShareExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -187,6 +252,7 @@
 			targets = (
 				A03924312F99F69E00879030 /* TLGX */,
 				B01000000000000000000003 /* TLGXWidgetExtension */,
+				C01000000000000000000003 /* TLGXShareExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -200,6 +266,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B01000000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C01000000000000000000006 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -223,6 +296,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C01000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -230,6 +310,11 @@
 			isa = PBXTargetDependency;
 			target = B01000000000000000000003 /* TLGXWidgetExtension */;
 			targetProxy = B0100000000000000000000D /* PBXContainerItemProxy */;
+		};
+		C0100000000000000000000C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C01000000000000000000003 /* TLGXShareExtension */;
+			targetProxy = C0100000000000000000000B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -363,7 +448,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = TLGX.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5D4R3GN4FQ;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -375,7 +460,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.1;
+				MARKETING_VERSION = 1.3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = tixingwo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -401,7 +486,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = TLGX.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5D4R3GN4FQ;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -413,7 +498,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.1;
+				MARKETING_VERSION = 1.3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = tixingwo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -493,6 +578,64 @@
 			};
 			name = Release;
 		};
+		C01000000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TLGXShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5D4R3GN4FQ;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "TLGXShareExtension/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.3.2;
+				PRODUCT_BUNDLE_IDENTIFIER = tixingwo.share;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C01000000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TLGXShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5D4R3GN4FQ;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "TLGXShareExtension/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.3.2;
+				PRODUCT_BUNDLE_IDENTIFIER = tixingwo.share;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -519,6 +662,15 @@
 			buildConfigurations = (
 				B01000000000000000000007 /* Debug */,
 				B01000000000000000000008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C01000000000000000000009 /* Build configuration list for PBXNativeTarget "TLGXShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C01000000000000000000007 /* Debug */,
+				C01000000000000000000008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

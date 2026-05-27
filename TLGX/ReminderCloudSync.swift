@@ -2,12 +2,18 @@
 //  ReminderCloudSync.swift
 //  TLGX
 //
-//  Lightweight iCloud key-value sync for ReminderStore. The dataset is tiny
-//  (a few dozen reminders, KBs of JSON) so NSUbiquitousKeyValueStore is the
-//  right tool: ~1 MB quota, zero backend, automatic across devices on the
-//  same Apple ID. The widget extension never talks to iCloud directly — the
-//  main app mirrors every remote change into App Group UserDefaults and then
-//  asks WidgetCenter to reload, so the widget always reads fresh data.
+//  Explicit-direction iCloud sync for ReminderStore.
+//
+//  Design: the user picks the direction every time — either upload local
+//  to iCloud, or download iCloud to local. There is no automatic,
+//  "smart" reconciler; both directions are unambiguous overwrites that
+//  always show a confirmation preview with the entry counts and how many
+//  entries on the destination side will be removed.
+//
+//  Storage: NSUbiquitousKeyValueStore (~1 MB quota, zero backend,
+//  automatic across devices on the same Apple ID). The widget extension
+//  never talks to iCloud directly — successful syncs are mirrored into
+//  App Group UserDefaults and widget timelines are reloaded from there.
 //
 
 import Foundation
@@ -15,133 +21,165 @@ import WidgetKit
 
 enum ReminderCloudSync {
 
-    /// Posted (on main queue) whenever a reconcile pass finishes, regardless
-    /// of whether anything actually changed. UI uses this to refresh the
-    /// "last synced" label.
+    /// Posted (on main queue) when an explicit upload/download finishes.
+    /// The UI uses this to refresh "last synced" and dismiss spinners.
     static let didFinishSyncNotification = Notification.Name("ReminderCloudSync.didFinishSync")
 
     private static let lastSyncedAtKey = "tlgx.icloud.lastSyncedAt"
 
-    /// Wall-clock time of the most recent successful reconcile attempt.
-    /// `nil` means we have never managed to talk to iCloud on this device.
+    /// Wall-clock time of the most recent successful upload or download.
+    /// `nil` means the user has never synced on this device.
     static var lastSyncedAt: Date? {
         let t = ReminderStore.defaults.double(forKey: lastSyncedAtKey)
         return t > 0 ? Date(timeIntervalSince1970: t) : nil
     }
 
-    /// `true` when the device has an iCloud account signed in. KV store
-    /// silently no-ops without one, so we surface this to the user.
+    /// `true` when the device is signed into iCloud. KV store silently
+    /// no-ops without an account, so we surface this to the user.
     static var isAvailable: Bool {
         FileManager.default.ubiquityIdentityToken != nil
     }
 
-    /// User-triggered sync. Pulls the cloud snapshot immediately and pushes
-    /// any pending local changes. Safe to call from the main thread.
-    static func syncNow() {
+    /// Warm the KV store cache so the first preview after launch sees the
+    /// latest cloud snapshot without an extra round trip. Local data is
+    /// never modified here.
+    static func bootstrap() {
         NSUbiquitousKeyValueStore.default.synchronize()
-        reconcileWithCloud(source: "manual")
     }
 
-    /// Wires up KV-store observation and reconciles initial state with the
-    /// cloud. Call once during app launch (e.g. from `TLGXApp.init`).
-    static func bootstrap() {
-        NotificationCenter.default.addObserver(
-            forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
-            object: NSUbiquitousKeyValueStore.default,
-            queue: .main
-        ) { note in
-            handleRemoteChange(note)
+    // MARK: - Preview
+
+    struct DirectionPreview {
+        enum Direction { case upload, download }
+
+        enum Outcome {
+            /// Ready to apply: the destination side will be overwritten.
+            case ready
+            /// Both sides already hold the same snapshot — nothing to do.
+            case identical
+            /// User isn't signed into iCloud — sync isn't possible.
+            case notSignedIn
         }
 
-        // Force an early pull from iCloud so the very first launch on a new
-        // device shows data instead of an empty list while we wait for an
-        // external-change notification.
-        NSUbiquitousKeyValueStore.default.synchronize()
-        reconcileWithCloud(source: "bootstrap")
+        var direction: Direction
+        var outcome: Outcome
+        /// Reminders currently on this device.
+        var localCount: Int
+        /// Reminders currently in iCloud.
+        var cloudCount: Int
+        /// Entries that exist only on the destination side and will be
+        /// removed when this sync is applied. For `.upload` this is the
+        /// cloud-only count; for `.download` this is the local-only count.
+        var willDelete: Int
     }
 
-    // MARK: - Reconciliation
+    static func previewUpload() -> DirectionPreview {
+        makePreview(direction: .upload)
+    }
 
-    /// Pull the cloud snapshot and decide which side wins based on a simple
-    /// last-write-wins timestamp. On a tie we keep local to avoid spurious
-    /// rewrites.
-    static func reconcileWithCloud(source: String) {
+    static func previewDownload() -> DirectionPreview {
+        makePreview(direction: .download)
+    }
+
+    private static func makePreview(direction: DirectionPreview.Direction) -> DirectionPreview {
+        guard isAvailable else {
+            return DirectionPreview(direction: direction,
+                                    outcome: .notSignedIn,
+                                    localCount: 0, cloudCount: 0, willDelete: 0)
+        }
+
         let kv = NSUbiquitousKeyValueStore.default
+        kv.synchronize()
         let defaults = ReminderStore.defaults
 
         let cloudData = kv.data(forKey: ReminderStore.remindersKey)
-        let cloudStamp = kv.double(forKey: ReminderStore.updatedAtKey)
         let localData = defaults.data(forKey: ReminderStore.remindersKey)
-        let localStamp = defaults.double(forKey: ReminderStore.updatedAtKey)
 
-        switch (cloudData, localData) {
-        case (nil, nil):
-            return
+        let decoder = JSONDecoder()
+        let cloud: [Reminder] = cloudData.flatMap { try? decoder.decode([Reminder].self, from: $0) } ?? []
+        let local: [Reminder] = localData.flatMap { try? decoder.decode([Reminder].self, from: $0) } ?? []
+        let cloudIDs = Set(cloud.map(\.id))
+        let localIDs = Set(local.map(\.id))
 
-        case (let cd?, nil):
-            applyCloud(data: cd, stamp: cloudStamp, source: source)
-
-        case (nil, let ld?):
-            // Local has data the cloud has never seen — push it up.
-            kv.set(ld, forKey: ReminderStore.remindersKey)
-            kv.set(localStamp, forKey: ReminderStore.updatedAtKey)
-            kv.synchronize()
-
-        case (let cd?, let ld?):
-            if cloudStamp > localStamp {
-                applyCloud(data: cd, stamp: cloudStamp, source: source)
-            } else if localStamp > cloudStamp {
-                kv.set(ld, forKey: ReminderStore.remindersKey)
-                kv.set(localStamp, forKey: ReminderStore.updatedAtKey)
-                kv.synchronize()
-            }
-            // Equal timestamps: assume already in sync, do nothing.
+        // Treat byte-identical snapshots as a no-op so the UI can show a
+        // friendly "already in sync" alert instead of a destructive one.
+        if let cd = cloudData, let ld = localData, cd == ld {
+            return DirectionPreview(direction: direction,
+                                    outcome: .identical,
+                                    localCount: local.count,
+                                    cloudCount: cloud.count,
+                                    willDelete: 0)
         }
 
-        // Always stamp the last-attempt time so the UI can show "just now"
-        // even when nothing actually moved.
+        let willDelete: Int
+        switch direction {
+        case .upload:
+            // Cloud will be replaced with local → cloud-only ids disappear.
+            willDelete = cloudIDs.subtracting(localIDs).count
+        case .download:
+            // Local will be replaced with cloud → local-only ids disappear.
+            willDelete = localIDs.subtracting(cloudIDs).count
+        }
+
+        return DirectionPreview(direction: direction,
+                                outcome: .ready,
+                                localCount: local.count,
+                                cloudCount: cloud.count,
+                                willDelete: willDelete)
+    }
+
+    // MARK: - Execute
+
+    /// Overwrite the iCloud snapshot with the current local snapshot.
+    /// Caller is responsible for confirming with the user first (see
+    /// `previewUpload()`).
+    static func uploadLocalToCloud() {
+        let defaults = ReminderStore.defaults
+        let kv = NSUbiquitousKeyValueStore.default
+
+        if let localData = defaults.data(forKey: ReminderStore.remindersKey) {
+            let stamp = Date().timeIntervalSince1970
+            defaults.set(stamp, forKey: ReminderStore.updatedAtKey)
+            kv.set(localData, forKey: ReminderStore.remindersKey)
+            kv.set(stamp, forKey: ReminderStore.updatedAtKey)
+        } else {
+            // Local is empty: erase the cloud snapshot too.
+            kv.removeObject(forKey: ReminderStore.remindersKey)
+            kv.removeObject(forKey: ReminderStore.updatedAtKey)
+        }
+        kv.synchronize()
+
         defaults.set(Date().timeIntervalSince1970, forKey: lastSyncedAtKey)
         NotificationCenter.default.post(name: didFinishSyncNotification, object: nil)
     }
 
-    private static func applyCloud(data: Data, stamp: Double, source: String) {
+    /// Overwrite the local snapshot with the current iCloud snapshot.
+    /// Caller is responsible for confirming with the user first (see
+    /// `previewDownload()`).
+    static func downloadCloudToLocal() {
         let defaults = ReminderStore.defaults
-        // Skip rewrites when the bytes are identical — saves a SwiftUI
-        // refresh storm when iCloud occasionally re-delivers the same value.
-        if defaults.data(forKey: ReminderStore.remindersKey) == data {
+        let kv = NSUbiquitousKeyValueStore.default
+        kv.synchronize()
+
+        let stamp = Date().timeIntervalSince1970
+
+        if let cloudData = kv.data(forKey: ReminderStore.remindersKey) {
+            defaults.set(cloudData, forKey: ReminderStore.remindersKey)
             defaults.set(stamp, forKey: ReminderStore.updatedAtKey)
-            return
+        } else {
+            // Cloud is empty: clear local too.
+            defaults.removeObject(forKey: ReminderStore.remindersKey)
+            defaults.removeObject(forKey: ReminderStore.updatedAtKey)
         }
-        defaults.set(data, forKey: ReminderStore.remindersKey)
-        defaults.set(stamp, forKey: ReminderStore.updatedAtKey)
+
+        defaults.set(stamp, forKey: lastSyncedAtKey)
 
         NotificationCenter.default.post(
             name: ReminderStore.didChangeRemotelyNotification,
             object: nil,
-            userInfo: ["source": source]
+            userInfo: ["source": "download"]
         )
         WidgetCenter.shared.reloadAllTimelines()
-    }
-
-    // MARK: - Notification handler
-
-    private static func handleRemoteChange(_ note: Notification) {
-        let info = note.userInfo ?? [:]
-        let reason = info[NSUbiquitousKeyValueStoreChangeReasonKey] as? Int
-            ?? NSUbiquitousKeyValueStoreServerChange
-
-        switch reason {
-        case NSUbiquitousKeyValueStoreServerChange,
-             NSUbiquitousKeyValueStoreInitialSyncChange,
-             NSUbiquitousKeyValueStoreAccountChange:
-            reconcileWithCloud(source: "remote")
-        case NSUbiquitousKeyValueStoreQuotaViolationChange:
-            // ~1 MB quota exceeded. With our schema this means the user has
-            // thousands of reminders — far beyond the design target. Logging
-            // is enough; we keep local data intact.
-            print("[ReminderCloudSync] iCloud KV quota exceeded; local data preserved.")
-        default:
-            reconcileWithCloud(source: "unknown")
-        }
+        NotificationCenter.default.post(name: didFinishSyncNotification, object: nil)
     }
 }

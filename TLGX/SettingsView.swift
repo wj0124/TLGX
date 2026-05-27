@@ -18,6 +18,11 @@ struct SettingsView: View {
     // while the sheet is open, without re-rendering on every tick.
     @State private var relativeTimeTick = 0
 
+    /// Set when the user taps upload or download. Presence drives the
+    /// confirmation alert; the contained `DirectionPreview` shapes its
+    /// title/message/buttons.
+    @State private var pendingPreview: ReminderCloudSync.DirectionPreview?
+
     @StateObject private var iconManager = AppIconManager.shared
     @AppStorage(AppearanceStorageKey.mode) private var appearanceRaw = AppearanceMode.system.rawValue
 
@@ -50,6 +55,18 @@ struct SettingsView: View {
             )) { _ in
                 lastSyncedAt = ReminderCloudSync.lastSyncedAt
                 isSyncing = false
+            }
+            .alert(
+                syncAlertTitle,
+                isPresented: Binding(
+                    get: { pendingPreview != nil },
+                    set: { if !$0 { pendingPreview = nil } }
+                ),
+                presenting: pendingPreview
+            ) { preview in
+                syncAlertActions(for: preview)
+            } message: { preview in
+                Text(syncAlertMessage(for: preview))
             }
             .task {
                 while !Task.isCancelled {
@@ -84,31 +101,64 @@ struct SettingsView: View {
 
                 Spacer()
 
-                Button {
-                    triggerSync()
-                } label: {
-                    if isSyncing {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.body.weight(.semibold))
-                    }
+                if isSyncing {
+                    ProgressView()
+                        .controlSize(.small)
                 }
-                .buttonStyle(.borderless)
-                .disabled(isSyncing || !ReminderCloudSync.isAvailable)
-                .accessibilityLabel("立即同步")
             }
             .padding(.vertical, 2)
+
+            Button {
+                requestPreview(direction: .upload)
+            } label: {
+                directionRow(
+                    systemImage: "icloud.and.arrow.up",
+                    title: "上传到 iCloud",
+                    subtitle: "用本机覆盖云端"
+                )
+            }
+            .disabled(isSyncing || !ReminderCloudSync.isAvailable)
+
+            Button {
+                requestPreview(direction: .download)
+            } label: {
+                directionRow(
+                    systemImage: "icloud.and.arrow.down",
+                    title: "从 iCloud 下载",
+                    subtitle: "用云端覆盖本机"
+                )
+            }
+            .disabled(isSyncing || !ReminderCloudSync.isAvailable)
         } header: {
             Text("iCloud 同步")
         } footer: {
             if ReminderCloudSync.isAvailable {
-                Text("同一 Apple ID 的设备之间自动同步。点右侧按钮可手动触发。")
+                Text("为避免误删，同步不会自动进行。请明确选择方向，点击后会先弹出预览。")
             } else {
-                Text("在「设置 - Apple 账户 - iCloud」登录后即可在多设备间自动同步。")
+                Text("在「设置 - Apple 账户 - iCloud」登录后即可在多设备间手动同步。")
             }
         }
+    }
+
+    @ViewBuilder
+    private func directionRow(systemImage: String, title: String, subtitle: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.blue)
+                .frame(width: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.primary)
+                Text(subtitle)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
     }
 
     private var syncStatusDetail: String {
@@ -138,14 +188,80 @@ struct SettingsView: View {
         return f.localizedString(for: date, relativeTo: Date())
     }
 
-    private func triggerSync() {
+    private func requestPreview(direction: ReminderCloudSync.DirectionPreview.Direction) {
+        guard !isSyncing else { return }
+        switch direction {
+        case .upload:   pendingPreview = ReminderCloudSync.previewUpload()
+        case .download: pendingPreview = ReminderCloudSync.previewDownload()
+        }
+    }
+
+    private func performSync(_ preview: ReminderCloudSync.DirectionPreview) {
         guard !isSyncing else { return }
         isSyncing = true
-        ReminderCloudSync.syncNow()
+        switch preview.direction {
+        case .upload:   ReminderCloudSync.uploadLocalToCloud()
+        case .download: ReminderCloudSync.downloadCloudToLocal()
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             if isSyncing {
                 lastSyncedAt = ReminderCloudSync.lastSyncedAt
                 isSyncing = false
+            }
+        }
+    }
+
+    // MARK: - Sync confirmation alert
+
+    private var syncAlertTitle: String {
+        guard let p = pendingPreview else { return "" }
+        switch p.outcome {
+        case .identical:
+            return "本机与 iCloud 已一致"
+        case .notSignedIn:
+            return "未登录 iCloud"
+        case .ready:
+            return p.direction == .upload ? "上传到 iCloud" : "从 iCloud 下载"
+        }
+    }
+
+    private func syncAlertMessage(for p: ReminderCloudSync.DirectionPreview) -> String {
+        switch p.outcome {
+        case .identical:
+            return "两边都是 \(p.localCount) 条提醒，不需要同步。"
+        case .notSignedIn:
+            return "请先在系统「设置」中登录 iCloud。"
+        case .ready:
+            var parts: [String] = []
+            switch p.direction {
+            case .upload:
+                parts.append("本机 \(p.localCount) 条 → iCloud \(p.cloudCount) 条")
+                if p.willDelete > 0 {
+                    parts.append("其中 \(p.willDelete) 条仅在 iCloud 中，将被删除。")
+                }
+            case .download:
+                parts.append("iCloud \(p.cloudCount) 条 → 本机 \(p.localCount) 条")
+                if p.willDelete > 0 {
+                    parts.append("其中 \(p.willDelete) 条仅在本机，将被删除。")
+                }
+            }
+            parts.append("是否继续？")
+            return parts.joined(separator: "\n")
+        }
+    }
+
+    @ViewBuilder
+    private func syncAlertActions(for preview: ReminderCloudSync.DirectionPreview) -> some View {
+        switch preview.outcome {
+        case .identical, .notSignedIn:
+            Button("好", role: .cancel) { pendingPreview = nil }
+        case .ready:
+            Button("取消", role: .cancel) { pendingPreview = nil }
+            Button(preview.willDelete > 0 ? "继续" : (preview.direction == .upload ? "上传" : "下载"),
+                   role: preview.willDelete > 0 ? .destructive : nil) {
+                let p = preview
+                pendingPreview = nil
+                performSync(p)
             }
         }
     }

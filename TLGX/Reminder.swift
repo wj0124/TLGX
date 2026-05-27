@@ -55,22 +55,30 @@ struct Reminder: Identifiable, Codable, Hashable {
     var emoji: String?
     /// Whether the user has pinned this reminder to the top of the list.
     var isPinned: Bool
+    /// Timestamp of the most recent user-initiated trigger (currently: the
+    /// moment a Live Activity was started for this reminder). `nil` if the
+    /// reminder has never been triggered. Surfaced in the list row to give
+    /// users a sense of how recently/often they've engaged with it.
+    var lastTriggeredAt: Date?
 
     init(id: UUID = UUID(),
          title: String,
          schedule: ReminderSchedule? = nil,
          emoji: String? = nil,
-         isPinned: Bool = false) {
+         isPinned: Bool = false,
+         lastTriggeredAt: Date? = nil) {
         self.id = id
         self.title = title
         self.schedule = schedule
         self.emoji = emoji
         self.isPinned = isPinned
+        self.lastTriggeredAt = lastTriggeredAt
     }
 
-    // Custom decode so older persisted payloads (without `isPinned`) keep working.
+    // Custom decode so older persisted payloads (without `isPinned` /
+    // `lastTriggeredAt`) keep working.
     private enum CodingKeys: String, CodingKey {
-        case id, title, schedule, emoji, isPinned
+        case id, title, schedule, emoji, isPinned, lastTriggeredAt
     }
 
     init(from decoder: Decoder) throws {
@@ -80,6 +88,7 @@ struct Reminder: Identifiable, Codable, Hashable {
         schedule = try c.decodeIfPresent(ReminderSchedule.self, forKey: .schedule)
         emoji = try c.decodeIfPresent(String.self, forKey: .emoji)
         isPinned = try c.decodeIfPresent(Bool.self, forKey: .isPinned) ?? false
+        lastTriggeredAt = try c.decodeIfPresent(Date.self, forKey: .lastTriggeredAt)
     }
 }
 
@@ -105,18 +114,16 @@ enum ReminderStore {
         return items
     }
 
-    /// Persist `items` locally and mirror them to iCloud Key-Value storage
-    /// so other devices on the same Apple ID can pick up the change.
+    /// Persist `items` to local App Group storage only. iCloud is **not**
+    /// touched here — the user controls syncing explicitly from Settings via
+    /// `ReminderCloudSync.syncNow()`. The `updatedAtKey` stamp moves
+    /// forward so the manual sync preview can detect that local is ahead
+    /// of the cloud snapshot.
     static func save(_ items: [Reminder]) {
         guard let data = try? JSONEncoder().encode(items) else { return }
         let stamp = Date().timeIntervalSince1970
 
         defaults.set(data, forKey: remindersKey)
         defaults.set(stamp, forKey: updatedAtKey)
-
-        let kv = NSUbiquitousKeyValueStore.default
-        kv.set(data, forKey: remindersKey)
-        kv.set(stamp, forKey: updatedAtKey)
-        kv.synchronize()
     }
 }

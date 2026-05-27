@@ -96,6 +96,33 @@ enum ReminderScheduler {
             .removePendingNotificationRequests(withIdentifiers: ids)
     }
 
+    /// Sweep every pending notification and drop the ones that no longer
+    /// belong to a live reminder. This is the safety net for:
+    ///   * iCloud download / remote merges that remove reminders without
+    ///     going through `delete(_:)`;
+    ///   * a delete that races against an in-flight `schedule(reminder:)`
+    ///     (the `await center.add` can land after `cancel`);
+    ///   * stale identifiers left over from previous app versions or
+    ///     reinstalls.
+    /// Cheap to call — it's a single `pendingNotificationRequests` read
+    /// plus at most one `removePendingNotificationRequests` write.
+    static func reconcile(with reminders: [Reminder]) async {
+        let center = UNUserNotificationCenter.current()
+        let liveIDs = Set(reminders.map(\.id))
+        let pending = await center.pendingNotificationRequests()
+        let orphanIDs: [String] = pending.compactMap { req in
+            guard let rid = reminderID(fromNotificationIdentifier: req.identifier) else {
+                // Unknown identifier shape — treat as orphan so we can't
+                // accumulate junk we have no way to address later.
+                return req.identifier
+            }
+            return liveIDs.contains(rid) ? nil : req.identifier
+        }
+        if !orphanIDs.isEmpty {
+            center.removePendingNotificationRequests(withIdentifiers: orphanIDs)
+        }
+    }
+
     // MARK: - Identifiers
 
     /// Returns the leading reminder UUID embedded in a notification identifier
