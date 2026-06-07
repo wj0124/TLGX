@@ -25,11 +25,13 @@ struct SettingsView: View {
 
     @StateObject private var iconManager = AppIconManager.shared
     @AppStorage(AppearanceStorageKey.mode) private var appearanceRaw = AppearanceMode.system.rawValue
+    @AppStorage(DynamicIslandDisplayMode.storageKey) private var islandModeRaw = DynamicIslandDisplayMode.compact.rawValue
 
     var body: some View {
         NavigationStack {
             List {
                 iCloudSection
+                dynamicIslandSection
                 appearanceSection
                 appIconSection
             }
@@ -267,6 +269,28 @@ struct SettingsView: View {
     }
 
     // MARK: - App Icon
+
+    private var dynamicIslandSection: some View {
+        let current = DynamicIslandDisplayMode(rawValue: islandModeRaw) ?? .compact
+        return Section {
+            Picker(selection: Binding(
+                get: { DynamicIslandDisplayMode(rawValue: islandModeRaw) ?? .compact },
+                set: { islandModeRaw = $0.rawValue }
+            )) {
+                ForEach(DynamicIslandDisplayMode.allCases) { mode in
+                    Label(mode.displayName, systemImage: mode.symbolName)
+                        .tag(mode)
+                }
+            } label: {
+                Label("灵动岛常态", systemImage: current.symbolName)
+            }
+            .pickerStyle(.menu)
+        } header: {
+            Text("灵动岛")
+        } footer: {
+            Text("紧凑：仅显示左侧图标。标准：左侧图标 + 右侧短文字。详细：右侧展示更多文字。")
+        }
+    }
 
     private var appearanceSection: some View {
         let current = AppearanceMode(rawValue: appearanceRaw) ?? .system

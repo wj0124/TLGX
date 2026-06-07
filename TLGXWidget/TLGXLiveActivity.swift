@@ -43,11 +43,23 @@ struct TLGXLiveActivity: Widget {
                 Text(context.state.emoji)
                     .font(.system(size: 16))
             } compactTrailing: {
-                compactTitle(context.state.title)
+                compactTrailing(for: context.state)
             } minimal: {
                 Text(context.state.emoji)
                     .font(.system(size: 14))
             }
+        }
+    }
+
+    @ViewBuilder
+    private func compactTrailing(for state: TLGXAttributes.ContentState) -> some View {
+        switch state.islandMode {
+        case .compact:
+            EmptyView()
+        case .standard:
+            compactTitle(state.title)
+        case .detailed:
+            detailedCompactTitle(state.title)
         }
     }
 
@@ -68,6 +80,30 @@ struct TLGXLiveActivity: Widget {
             let second = String(chars.dropFirst(5).prefix(5))
             Text("\(first)\n\(second)")
                 .font(.system(size: 11, weight: .regular))
+                .lineLimit(2)
+                .multilineTextAlignment(.trailing)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.trailing, 4)
+        }
+    }
+
+    /// 灵动岛 detailed 右侧文案：
+    /// - ≤ 8 字：单行 14pt
+    /// - 9-16 字：8+8 两行 10pt，最多 16 字，超出丢弃
+    @ViewBuilder
+    private func detailedCompactTitle(_ raw: String) -> some View {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let chars = Array(trimmed)
+        if chars.count <= 8 {
+            Text(String(chars))
+                .font(.system(size: 14, weight: .regular))
+                .lineLimit(1)
+                .padding(.trailing, 4)
+        } else {
+            let first = String(chars.prefix(8))
+            let second = String(chars.dropFirst(8).prefix(8))
+            Text("\(first)\n\(second)")
+                .font(.system(size: 10, weight: .regular))
                 .lineLimit(2)
                 .multilineTextAlignment(.trailing)
                 .fixedSize(horizontal: false, vertical: true)

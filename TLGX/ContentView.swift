@@ -81,6 +81,7 @@ struct ContentView: View {
     /// Controls the Settings sheet (iCloud sync + future toggles).
     @State private var showSettings: Bool = false
     @State private var showCopiedToast: Bool = false
+    @AppStorage(DynamicIslandDisplayMode.storageKey) private var islandModeRaw = DynamicIslandDisplayMode.compact.rawValue
 
     /// TipKit-managed onboarding tip for long-press context menu.
     private let contextMenuTip = ContextMenuTip()
@@ -181,6 +182,7 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
+                    .appAppearance()
             }
         }
         .onAppear {
@@ -197,6 +199,9 @@ struct ContentView: View {
         }
         .onChange(of: notifications.pendingReminderID) { _, _ in
             handlePendingReminder()
+        }
+        .onChange(of: islandModeRaw) { _, _ in
+            syncActiveActivityPresentation()
         }
         .onReceive(NotificationCenter.default.publisher(
             for: ReminderStore.didChangeRemotelyNotification
@@ -756,12 +761,19 @@ struct ContentView: View {
 
     private func syncActiveActivityTitle(for reminder: Reminder) {
         guard activeID == reminder.id, let act = activity else { return }
-        let trimmed = reminder.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        let state = TLGXAttributes.ContentState(
-            title: trimmed,
-            emoji: reminder.emoji ?? EmojiGenerator.emoji(for: trimmed)
-        )
+        let state = makeActivityState(for: reminder)
+        Task {
+            await act.update(ActivityContent(state: state, staleDate: nil))
+        }
+    }
+
+    private func syncActiveActivityPresentation() {
+        guard let id = activeID,
+              let act = activity,
+              let reminder = reminders.first(where: { $0.id == id }) else {
+            return
+        }
+        let state = makeActivityState(for: reminder)
         Task {
             await act.update(ActivityContent(state: state, staleDate: nil))
         }
@@ -811,10 +823,7 @@ struct ContentView: View {
             reminderID: reminder.id.uuidString,
             startedAt: Date()
         )
-        let state = TLGXAttributes.ContentState(
-            title: reminder.title,
-            emoji: reminder.emoji ?? EmojiGenerator.emoji(for: reminder.title)
-        )
+        let state = makeActivityState(for: reminder)
         do {
             let act = try Activity.request(
                 attributes: attrs,
@@ -832,6 +841,17 @@ struct ContentView: View {
                 errorMessage = "启动失败：\(error.localizedDescription)"
             }
         }
+    }
+
+    private func makeActivityState(for reminder: Reminder) -> TLGXAttributes.ContentState {
+        let trimmed = reminder.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let title = trimmed.isEmpty ? reminder.title : trimmed
+        let mode = DynamicIslandDisplayMode(rawValue: islandModeRaw) ?? .compact
+        return TLGXAttributes.ContentState(
+            title: title,
+            emoji: reminder.emoji ?? EmojiGenerator.emoji(for: title),
+            islandMode: mode
+        )
     }
 
     /// Bump the reminder's `lastTriggeredAt` to now, persist, and refresh
