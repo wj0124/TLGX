@@ -282,13 +282,13 @@ struct SettingsView: View {
                         .tag(mode)
                 }
             } label: {
-                Label(String(localized: "灵动岛常态"), systemImage: current.symbolName)
+                Label(String(localized: "实时活动样式"), systemImage: current.symbolName)
             }
             .pickerStyle(.menu)
         } header: {
-            Text("灵动岛")
+            Text("实时活动")
         } footer: {
-            Text("紧凑：仅显示左侧图标。标准：左侧图标 + 右侧短文字。详细：右侧展示更多文字。")
+            Text("紧凑：仅显示左侧图标。标准：左侧图标 + 右侧短文字。")
         }
     }
 

@@ -11,7 +11,6 @@ import Foundation
 enum DynamicIslandDisplayMode: String, CaseIterable, Codable, Hashable, Identifiable {
     case compact
     case standard
-    case detailed
 
     var id: String { rawValue }
 
@@ -21,7 +20,6 @@ enum DynamicIslandDisplayMode: String, CaseIterable, Codable, Hashable, Identifi
         switch self {
         case .compact: return String(localized: "紧凑")
         case .standard: return String(localized: "标准")
-        case .detailed: return String(localized: "详细")
         }
     }
 
@@ -29,7 +27,6 @@ enum DynamicIslandDisplayMode: String, CaseIterable, Codable, Hashable, Identifi
         switch self {
         case .compact: return "circle.lefthalf.filled"
         case .standard: return "rectangle.split.2x1"
-        case .detailed: return "text.justify.left"
         }
     }
 }

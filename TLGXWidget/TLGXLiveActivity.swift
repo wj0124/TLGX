@@ -58,54 +58,26 @@ struct TLGXLiveActivity: Widget {
             EmptyView()
         case .standard:
             compactTitle(state.title)
-        case .detailed:
-            detailedCompactTitle(state.title)
         }
     }
 
-    /// 灵动岛 compact 右侧文案：
-    /// - ≤ 5 字：单行 17pt，文字偏大
-    /// - 6–10 字：5+5 两行 11pt，最多 10 字，超出丢弃
+    /// 标准模式右侧文案：最多 2 行 × 2 字，超出丢弃。
+    /// 4 字 → 2+2 两行居中 12pt；2 字 → 单行 17pt。
     @ViewBuilder
     private func compactTitle(_ raw: String) -> some View {
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        let chars = Array(trimmed)
-        if chars.count <= 5 {
+        let chars = Array(raw.trimmingCharacters(in: .whitespacesAndNewlines))
+        if chars.count <= 2 {
             Text(String(chars))
                 .font(.system(size: 17, weight: .regular))
                 .lineLimit(1)
                 .padding(.trailing, 4)
         } else {
-            let first = String(chars.prefix(5))
-            let second = String(chars.dropFirst(5).prefix(5))
+            let first = String(chars.prefix(2))
+            let second = String(chars.dropFirst(2).prefix(2))
             Text("\(first)\n\(second)")
-                .font(.system(size: 11, weight: .regular))
+                .font(.system(size: 12, weight: .regular))
                 .lineLimit(2)
-                .multilineTextAlignment(.trailing)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.trailing, 4)
-        }
-    }
-
-    /// 灵动岛 detailed 右侧文案：
-    /// - ≤ 8 字：单行 14pt
-    /// - 9-16 字：8+8 两行 10pt，最多 16 字，超出丢弃
-    @ViewBuilder
-    private func detailedCompactTitle(_ raw: String) -> some View {
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        let chars = Array(trimmed)
-        if chars.count <= 8 {
-            Text(String(chars))
-                .font(.system(size: 14, weight: .regular))
-                .lineLimit(1)
-                .padding(.trailing, 4)
-        } else {
-            let first = String(chars.prefix(8))
-            let second = String(chars.dropFirst(8).prefix(8))
-            Text("\(first)\n\(second)")
-                .font(.system(size: 10, weight: .regular))
-                .lineLimit(2)
-                .multilineTextAlignment(.trailing)
+                .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.trailing, 4)
         }

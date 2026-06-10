@@ -76,9 +76,6 @@ struct ContentView: View {
     @State private var editingScheduleReminder: Reminder? = nil
 
     /// Controls the About / privacy / help sheet visibility.
-    @State private var showAbout: Bool = false
-
-    /// Controls the Settings sheet (iCloud sync + future toggles).
     @State private var showSettings: Bool = false
     @State private var showCopiedToast: Bool = false
     @AppStorage(DynamicIslandDisplayMode.storageKey) private var islandModeRaw = DynamicIslandDisplayMode.compact.rawValue
@@ -112,25 +109,16 @@ struct ContentView: View {
                     titleSubtitleStack
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            showSettings = true
-                        } label: {
-                            Label("设置", systemImage: "gearshape")
-                        }
-                        Button {
-                            showAbout = true
-                        } label: {
-                            Label("关于", systemImage: "info.circle")
-                        }
+                    Button {
+                        showSettings = true
                     } label: {
-                        Image(systemName: "ellipsis")
+                        Image(systemName: "gearshape")
                             .font(.body.weight(.semibold))
                             .foregroundStyle(.primary)
                             .frame(width: 32, height: 32)
                             .contentShape(Rectangle())
                     }
-                    .accessibilityLabel("更多")
+                    .accessibilityLabel("设置")
                 }
             }
             .safeAreaInset(edge: .bottom) {
@@ -175,10 +163,6 @@ struct ContentView: View {
                     }
                 )
                 .appAppearance()
-            }
-            .sheet(isPresented: $showAbout) {
-                AboutView()
-                    .appAppearance()
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()

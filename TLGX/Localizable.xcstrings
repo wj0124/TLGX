@@ -129,8 +129,21 @@
         }
       }
     },
+    "一款专注个人提醒的轻量 App" : {
+      "comment" : "About: app description",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A lightweight personal reminder app"
+          }
+        }
+      }
+    },
     "一款专注个人提醒的轻量 App，支持锁屏实时活动、桌面小组件与 iCloud 同步。" : {
       "comment" : "App description in About header",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -279,6 +292,7 @@
     },
     "使用说明" : {
       "comment" : "Usage guide section header",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -506,6 +520,17 @@
         }
       }
     },
+    "同步" : {
+      "comment" : "About: sync info label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        }
+      }
+    },
     "向右滑动后点击「时间」可设置每日 / 每周提醒" : {
       "comment" : "Usage tip detail",
       "extractionState" : "stale",
@@ -669,12 +694,23 @@
       }
     },
     "实时活动" : {
-      "comment" : "Toggle label and accessibility label",
+      "comment" : "About: live activity label",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Live Activity"
+          }
+        }
+      }
+    },
+    "实时活动样式" : {
+      "comment" : "Picker label for live activity display mode",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Display Style"
           }
         }
       }
@@ -822,6 +858,17 @@
         }
       }
     },
+    "描述" : {
+      "comment" : "About: description label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Description"
+          }
+        }
+      }
+    },
     "提了个醒" : {
       "comment" : "App display title",
       "localizations" : {
@@ -885,6 +932,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schedule"
+          }
+        }
+      }
+    },
+    "支持 iCloud 多设备自动同步" : {
+      "comment" : "About: sync value",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud sync across devices"
           }
         }
       }
@@ -984,6 +1043,7 @@
     },
     "更多" : {
       "comment" : "Accessibility label for menu",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1137,28 +1197,6 @@
         }
       }
     },
-    "灵动岛" : {
-      "comment" : "Section header",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dynamic Island"
-          }
-        }
-      }
-    },
-    "灵动岛常态" : {
-      "comment" : "Picker label",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Island Default Mode"
-          }
-        }
-      }
-    },
     "点击任意一条提醒可重新编辑内容" : {
       "comment" : "Usage tip detail",
       "extractionState" : "stale",
@@ -1226,13 +1264,13 @@
         }
       }
     },
-    "紧凑：仅显示左侧图标。标准：左侧图标 + 右侧短文字。详细：右侧展示更多文字。" : {
-      "comment" : "Island mode description",
+    "紧凑：仅显示左侧图标。标准：左侧图标 + 右侧短文字。" : {
+      "comment" : "Live activity style footer description",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Compact: icon only. Standard: icon + short text. Detailed: more text on the right."
+            "value" : "Compact: icon only. Standard: icon + short text."
           }
         }
       }
@@ -1276,6 +1314,7 @@
     },
     "联系作者" : {
       "comment" : "Contact section header",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1343,17 +1382,6 @@
     },
     "设置失败：%@" : {
 
-    },
-    "详细" : {
-      "comment" : "Dynamic Island display mode: detailed",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Detailed"
-          }
-        }
-      }
     },
     "请先在系统「设置」中登录 iCloud。" : {
       "comment" : "Alert: not signed in",
@@ -1470,6 +1498,18 @@
         }
       }
     },
+    "锁屏与状态栏持续显示" : {
+      "comment" : "About: live activity value",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lock screen and status bar"
+          }
+        }
+      }
+    },
     "长按提醒" : {
       "comment" : "Tip: long-press context menu",
       "localizations" : {
@@ -1483,6 +1523,7 @@
     },
     "隐私承诺" : {
       "comment" : "Privacy section header",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
