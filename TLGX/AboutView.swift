@@ -198,7 +198,7 @@ struct AboutView: View {
     // MARK: - Helpers
 
     private var mailURL: URL {
-        let subject = "提了个醒 反馈"
+        let subject = String(localized: "提了个醒 反馈")
         let encoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? subject
         return URL(string: "mailto:\(contactEmail)?subject=\(encoded)")
             ?? URL(string: "mailto:\(contactEmail)")!

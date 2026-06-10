@@ -208,16 +208,16 @@ extension ReminderSchedule {
 
     /// Recurrence summary, e.g. "工作日" / "每天" / "只一次" / "周一、三、五".
     var recurrenceText: String {
-        if weekdays.isEmpty { return "只一次" }
-        if weekdays == Set(1...7) { return "每天" }
-        if weekdays == [2, 3, 4, 5, 6] { return "工作日" }
-        if weekdays == [1, 7] { return "周末" }
+        if weekdays.isEmpty { return String(localized: "只一次") }
+        if weekdays == Set(1...7) { return String(localized: "每天") }
+        if weekdays == [2, 3, 4, 5, 6] { return String(localized: "工作日") }
+        if weekdays == [1, 7] { return String(localized: "周末") }
         // Display order: Mon…Sun (Chinese convention).
         let displayOrder = [2, 3, 4, 5, 6, 7, 1]
-        let names = [2: "一", 3: "二", 4: "三", 5: "四", 6: "五", 7: "六", 1: "日"]
+        let names: [Int: String] = [2: String(localized: "一"), 3: String(localized: "二"), 4: String(localized: "三"), 5: String(localized: "四"), 6: String(localized: "五"), 7: String(localized: "六"), 1: String(localized: "日")]
         let parts = displayOrder
             .filter { weekdays.contains($0) }
             .compactMap { names[$0] }
-        return "周" + parts.joined(separator: "、")
+        return String(localized: "周\(parts.joined(separator: "、"))")
     }
 }

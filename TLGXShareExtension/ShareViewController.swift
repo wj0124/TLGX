@@ -44,7 +44,7 @@ final class ShareViewController: UIViewController {
         let trimmed = (raw ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !trimmed.isEmpty else {
-            await flash(success: false, message: "未识别到可用文字")
+            await flash(success: false, message: NSLocalizedString("未识别到可用文字", comment: "Share extension: no text found"))
             await finish(success: false)
             return
         }
@@ -64,7 +64,7 @@ final class ShareViewController: UIViewController {
         }
 
         await flash(success: true,
-                    message: saved ? "已添加到提了个醒" : "已存在相同提醒")
+                    message: saved ? NSLocalizedString("已添加到提了个醒", comment: "Share: saved") : NSLocalizedString("已存在相同提醒", comment: "Share: duplicate"))
         await finish(success: true)
     }
 

@@ -1,0 +1,98 @@
+{
+  "sourceLanguage" : "zh",
+  "strings" : {
+    "%@" : {
+
+    },
+    "%@\n%@" : {
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@\n%2$@"
+          }
+        }
+      }
+    },
+    "Reminder ID" : {
+
+    },
+    "开启于" : {
+      "comment" : "Live Activity: started at prefix",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Started at"
+          }
+        }
+      }
+    },
+    "把一条提醒放上桌面。" : {
+      "comment" : "Widget description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Put a reminder on your Home Screen."
+          }
+        }
+      }
+    },
+    "提醒" : {
+
+    },
+    "提醒卡片" : {
+      "comment" : "Widget configuration display name",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminder Card"
+          }
+        }
+      }
+    },
+    "显示哪条提醒" : {
+
+    },
+    "标准" : {
+
+    },
+    "紧凑" : {
+
+    },
+    "结束实时活动" : {
+      "comment" : "Accessibility label: end activity button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End Live Activity"
+          }
+        }
+      }
+    },
+    "详细" : {
+
+    },
+    "选择提醒" : {
+
+    },
+    "选择要在小组件中显示的提醒。" : {
+
+    },
+    "长按编辑\n选择要显示的提醒" : {
+      "comment" : "Widget empty state",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Long-press to edit\nPick a reminder to show"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -93,7 +93,7 @@ struct SettingsView: View {
                     .frame(width: 24)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(ReminderCloudSync.isAvailable ? "iCloud 同步已开启" : "未登录 iCloud")
+                    Text(ReminderCloudSync.isAvailable ? String(localized: "iCloud 同步已开启") : String(localized: "未登录 iCloud"))
                         .font(.subheadline.weight(.medium))
                     Text(syncStatusDetail)
                         .font(.footnote)
@@ -115,8 +115,8 @@ struct SettingsView: View {
             } label: {
                 directionRow(
                     systemImage: "icloud.and.arrow.up",
-                    title: "上传到 iCloud",
-                    subtitle: "用本机覆盖云端"
+                    title: String(localized: "上传到 iCloud"),
+                    subtitle: String(localized: "用本机覆盖云端")
                 )
             }
             .disabled(isSyncing || !ReminderCloudSync.isAvailable)
@@ -126,8 +126,8 @@ struct SettingsView: View {
             } label: {
                 directionRow(
                     systemImage: "icloud.and.arrow.down",
-                    title: "从 iCloud 下载",
-                    subtitle: "用云端覆盖本机"
+                    title: String(localized: "从 iCloud 下载"),
+                    subtitle: String(localized: "用云端覆盖本机")
                 )
             }
             .disabled(isSyncing || !ReminderCloudSync.isAvailable)
@@ -165,28 +165,28 @@ struct SettingsView: View {
 
     private var syncStatusDetail: String {
         guard ReminderCloudSync.isAvailable else {
-            return "提醒数据仅保存在本机"
+            return String(localized: "提醒数据仅保存在本机")
         }
         guard let date = lastSyncedAt else {
-            return "尚未同步"
+            return String(localized: "尚未同步")
         }
-        return "上次同步：" + Self.relativeString(for: date)
+        return String(localized: "上次同步：") + Self.relativeString(for: date)
     }
 
     /// `RelativeDateTimeFormatter` 在中文下对刚发生的时间会输出
     /// "0秒后" / "0秒前" 这类奇怪文案，所以短间隔自己处理。
     static func relativeString(for date: Date) -> String {
         let seconds = max(0, Date().timeIntervalSince(date))
-        if seconds < 60 { return "刚刚" }
+        if seconds < 60 { return String(localized: "刚刚") }
         if seconds < 3600 {
-            return "\(Int(seconds / 60)) 分钟前"
+            return String(localized: "\(Int(seconds / 60)) 分钟前")
         }
         if seconds < 86_400 {
-            return "\(Int(seconds / 3600)) 小时前"
+            return String(localized: "\(Int(seconds / 3600)) 小时前")
         }
         let f = RelativeDateTimeFormatter()
         f.unitsStyle = .short
-        f.locale = Locale(identifier: "zh_CN")
+        f.locale = Locale.current
         return f.localizedString(for: date, relativeTo: Date())
     }
 
@@ -219,35 +219,35 @@ struct SettingsView: View {
         guard let p = pendingPreview else { return "" }
         switch p.outcome {
         case .identical:
-            return "本机与 iCloud 已一致"
+            return String(localized: "本机与 iCloud 已一致")
         case .notSignedIn:
-            return "未登录 iCloud"
+            return String(localized: "未登录 iCloud")
         case .ready:
-            return p.direction == .upload ? "上传到 iCloud" : "从 iCloud 下载"
+            return p.direction == .upload ? String(localized: "上传到 iCloud") : String(localized: "从 iCloud 下载")
         }
     }
 
     private func syncAlertMessage(for p: ReminderCloudSync.DirectionPreview) -> String {
         switch p.outcome {
         case .identical:
-            return "两边都是 \(p.localCount) 条提醒，不需要同步。"
+            return String(localized: "两边都是 \(p.localCount) 条提醒，不需要同步。")
         case .notSignedIn:
-            return "请先在系统「设置」中登录 iCloud。"
+            return String(localized: "请先在系统「设置」中登录 iCloud。")
         case .ready:
             var parts: [String] = []
             switch p.direction {
             case .upload:
-                parts.append("本机 \(p.localCount) 条 → iCloud \(p.cloudCount) 条")
+                parts.append(String(localized: "本机 \(p.localCount) 条 → iCloud \(p.cloudCount) 条"))
                 if p.willDelete > 0 {
-                    parts.append("其中 \(p.willDelete) 条仅在 iCloud 中，将被删除。")
+                    parts.append(String(localized: "其中 \(p.willDelete) 条仅在 iCloud 中，将被删除。"))
                 }
             case .download:
-                parts.append("iCloud \(p.cloudCount) 条 → 本机 \(p.localCount) 条")
+                parts.append(String(localized: "iCloud \(p.cloudCount) 条 → 本机 \(p.localCount) 条"))
                 if p.willDelete > 0 {
-                    parts.append("其中 \(p.willDelete) 条仅在本机，将被删除。")
+                    parts.append(String(localized: "其中 \(p.willDelete) 条仅在本机，将被删除。"))
                 }
             }
-            parts.append("是否继续？")
+            parts.append(String(localized: "是否继续？"))
             return parts.joined(separator: "\n")
         }
     }
@@ -259,7 +259,7 @@ struct SettingsView: View {
             Button("好", role: .cancel) { pendingPreview = nil }
         case .ready:
             Button("取消", role: .cancel) { pendingPreview = nil }
-            Button(preview.willDelete > 0 ? "继续" : (preview.direction == .upload ? "上传" : "下载"),
+            Button(preview.willDelete > 0 ? String(localized: "继续") : (preview.direction == .upload ? String(localized: "上传") : String(localized: "下载")),
                    role: preview.willDelete > 0 ? .destructive : nil) {
                 let p = preview
                 pendingPreview = nil
@@ -282,7 +282,7 @@ struct SettingsView: View {
                         .tag(mode)
                 }
             } label: {
-                Label("灵动岛常态", systemImage: current.symbolName)
+                Label(String(localized: "灵动岛常态"), systemImage: current.symbolName)
             }
             .pickerStyle(.menu)
         } header: {

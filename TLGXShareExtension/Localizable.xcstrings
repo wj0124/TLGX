@@ -1,0 +1,39 @@
+{
+  "sourceLanguage" : "zh",
+  "strings" : {
+    "已存在相同提醒" : {
+      "comment" : "Share: duplicate",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicate reminder skipped"
+          }
+        }
+      }
+    },
+    "已添加到提了个醒" : {
+      "comment" : "Share: saved",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Added to Remind Me"
+          }
+        }
+      }
+    },
+    "未识别到可用文字" : {
+      "comment" : "Share extension: no text found",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No usable text found"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

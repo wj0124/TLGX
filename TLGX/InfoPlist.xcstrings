@@ -1,0 +1,36 @@
+{
+  "sourceLanguage" : "zh",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "App display name on Home Screen",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Remind Me"
+          }
+        },
+        "zh" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "提了个醒"
+          }
+        }
+      }
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "TLGX"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

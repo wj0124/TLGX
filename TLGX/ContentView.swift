@@ -385,7 +385,7 @@ struct ContentView: View {
                         .font(.body.weight(.medium))
                         .foregroundStyle(isEditing ? Color.indigo : .primary)
                         .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityLabel(reminder.isPinned ? "\(reminder.title)，已置顶" : reminder.title)
+                        .accessibilityLabel(reminder.isPinned ? "\(reminder.title)" + String(localized: "，已置顶") : reminder.title)
                     if let schedule = reminder.schedule {
                         scheduleChip(schedule)
                     }
@@ -456,7 +456,7 @@ struct ContentView: View {
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
             Text(date, format: .relative(presentation: .named, unitsStyle: .wide)
-                .locale(Locale(identifier: "zh_CN")))
+                .locale(Locale.current))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
@@ -496,11 +496,11 @@ struct ContentView: View {
     /// normal vertical center.
     private var titleSubtitle: (text: String, tint: Color, tap: () -> Void)? {
         if showCopiedToast {
-            return ("已复制到剪贴板", .green, {})
+            return (String(localized: "已复制到剪贴板"), .green, {})
         }
         guard let active = reminders.first(where: { $0.id == activeID }) else { return nil }
         let tint = EmojiGenerator.tint(for: active.emoji ?? EmojiGenerator.emoji(for: active.title))
-        return ("进行中:\(active.title)", tint, { beginEdit(active) })
+        return (String(localized: "进行中:\(active.title)"), tint, { beginEdit(active) })
     }
 
     private var composerBar: some View {
@@ -534,7 +534,7 @@ struct ContentView: View {
                 .popoverTip(emojiButtonTip)
 
                 TextField(
-                    isEditing ? "修改提醒内容" : "新建提醒…",
+                    isEditing ? String(localized: "修改提醒内容") : String(localized: "新建提醒…"),
                     text: $composerText,
                     axis: .vertical
                 )
@@ -634,9 +634,9 @@ struct ContentView: View {
     }
 
     private func trailingIconAccessibilityLabel(isEditing: Bool, canSubmit: Bool) -> String {
-        if canSubmit { return isEditing ? "保存修改" : "新建提醒" }
-        if composerFocused { return "收起键盘" }
-        return "新建提醒"
+        if canSubmit { return isEditing ? String(localized: "保存修改") : String(localized: "新建提醒") }
+        if composerFocused { return String(localized: "收起键盘") }
+        return String(localized: "新建提醒")
     }
 
     private func cancelEdit() {
@@ -722,7 +722,7 @@ struct ContentView: View {
                 let granted = await ReminderScheduler.requestAuthIfNeeded()
                 guard granted else {
                     await MainActor.run {
-                        errorMessage = "请在 设置 > 提了个醒 中开启「通知」权限"
+                        errorMessage = String(localized: "请在 设置 > 提了个醒 中开启「通知」权限")
                     }
                     return
                 }
@@ -731,7 +731,7 @@ struct ContentView: View {
                 try await ReminderScheduler.schedule(reminder: updated)
             } catch {
                 await MainActor.run {
-                    errorMessage = "设置失败：\(error.localizedDescription)"
+                    errorMessage = String(localized: "设置失败：\(error.localizedDescription)")
                 }
             }
         }
@@ -814,7 +814,7 @@ struct ContentView: View {
 
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             await MainActor.run {
-                errorMessage = "请在 设置 > 提了个醒 中开启「实时活动」权限"
+                errorMessage = String(localized: "请在 设置 > 提了个醒 中开启「实时活动」权限")
             }
             return
         }
@@ -838,7 +838,7 @@ struct ContentView: View {
             observe(act)
         } catch {
             await MainActor.run {
-                errorMessage = "启动失败：\(error.localizedDescription)"
+                errorMessage = String(localized: "启动失败：\(error.localizedDescription)")
             }
         }
     }

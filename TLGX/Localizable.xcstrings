@@ -1,0 +1,1508 @@
+{
+  "sourceLanguage" : "zh",
+  "strings" : {
+    "" : {
+
+    },
+    "，已置顶" : {
+      "comment" : "Accessibility suffix for pinned reminders",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", Pinned"
+          }
+        }
+      }
+    },
+    "·" : {
+
+    },
+    "\\(Int(seconds / 60)) 分钟前" : {
+      "comment" : "Relative time: minutes ago",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld min ago"
+          }
+        }
+      }
+    },
+    "\\(Int(seconds / 3600)) 小时前" : {
+      "comment" : "Relative time: hours ago",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld hr ago"
+          }
+        }
+      }
+    },
+    "%lld 分钟前" : {
+
+    },
+    "%lld 小时前" : {
+
+    },
+    "App 图标" : {
+      "comment" : "Section header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Icon"
+          }
+        }
+      }
+    },
+    "iCloud \\(p.cloudCount) 条 → 本机 \\(p.localCount) 条" : {
+      "comment" : "Download preview",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud: %ld → Local: %ld"
+          }
+        }
+      }
+    },
+    "iCloud %lld 条 → 本机 %lld 条" : {
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iCloud %1$lld 条 → 本机 %2$lld 条"
+          }
+        }
+      }
+    },
+    "iCloud 同步" : {
+      "comment" : "Section header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud Sync"
+          }
+        }
+      }
+    },
+    "iCloud 同步已开启" : {
+      "comment" : "iCloud status",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud Sync Enabled"
+          }
+        }
+      }
+    },
+    "iCloud 同步由系统直接完成，作者无法看到你的内容" : {
+      "comment" : "Privacy bullet",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud sync is handled by the system; the author cannot see your content"
+          }
+        }
+      }
+    },
+    "Reminder ID" : {
+
+    },
+    "一" : {
+      "comment" : "Monday abbreviation",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mon"
+          }
+        }
+      }
+    },
+    "一款专注个人提醒的轻量 App，支持锁屏实时活动、桌面小组件与 iCloud 同步。" : {
+      "comment" : "App description in About header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A lightweight personal reminder app with Live Activities, widgets, and iCloud sync."
+          }
+        }
+      }
+    },
+    "三" : {
+      "comment" : "Wednesday abbreviation",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wed"
+          }
+        }
+      }
+    },
+    "上传" : {
+      "comment" : "Upload button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload"
+          }
+        }
+      }
+    },
+    "上传到 iCloud" : {
+      "comment" : "Upload button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload to iCloud"
+          }
+        }
+      }
+    },
+    "上次" : {
+      "comment" : "Last triggered prefix",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last"
+          }
+        }
+      }
+    },
+    "上次同步：" : {
+      "comment" : "Sync status with time",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last synced: %@"
+          }
+        }
+      }
+    },
+    "下载" : {
+      "comment" : "Download button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download"
+          }
+        }
+      }
+    },
+    "不收集、不上传任何信息到第三方服务器" : {
+      "comment" : "Privacy bullet",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No data is collected or sent to third-party servers"
+          }
+        }
+      }
+    },
+    "两边都是 \\(p.localCount) 条提醒，不需要同步。" : {
+      "comment" : "Alert message: identical",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Both sides have %ld reminders. No sync needed."
+          }
+        }
+      }
+    },
+    "两边都是 %lld 条提醒，不需要同步。" : {
+
+    },
+    "为避免误删，同步不会自动进行。请明确选择方向，点击后会先弹出预览。" : {
+      "comment" : "iCloud sync section footer: explain manual sync",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync is manual to prevent accidental data loss. Please choose a direction, and a preview will be shown first."
+          }
+        }
+      }
+    },
+    "二" : {
+      "comment" : "Tuesday abbreviation",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tue"
+          }
+        }
+      }
+    },
+    "五" : {
+      "comment" : "Friday abbreviation",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fri"
+          }
+        }
+      }
+    },
+    "从 iCloud 下载" : {
+      "comment" : "Download button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download from iCloud"
+          }
+        }
+      }
+    },
+    "使用说明" : {
+      "comment" : "Usage guide section header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usage Guide"
+          }
+        }
+      }
+    },
+    "保存" : {
+      "comment" : "Save button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        }
+      }
+    },
+    "保存修改" : {
+      "comment" : "Accessibility label for save edit",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Changes"
+          }
+        }
+      }
+    },
+    "修改提醒内容" : {
+      "comment" : "Text field placeholder when editing",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit reminder"
+          }
+        }
+      }
+    },
+    "六" : {
+      "comment" : "Saturday abbreviation",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sat"
+          }
+        }
+      }
+    },
+    "关于" : {
+      "comment" : "Toolbar button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About"
+          }
+        }
+      }
+    },
+    "关闭" : {
+      "comment" : "Close button / accessibility",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        }
+      }
+    },
+    "其中 \\(p.willDelete) 条仅在 iCloud 中，将被删除。" : {
+      "comment" : "Upload will-delete",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%ld items exist only in iCloud and will be deleted."
+          }
+        }
+      }
+    },
+    "其中 \\(p.willDelete) 条仅在本机，将被删除。" : {
+      "comment" : "Download will-delete",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%ld items exist only locally and will be deleted."
+          }
+        }
+      }
+    },
+    "其中 %lld 条仅在 iCloud 中，将被删除。" : {
+
+    },
+    "其中 %lld 条仅在本机，将被删除。" : {
+
+    },
+    "分享" : {
+      "comment" : "Context menu: share",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share"
+          }
+        }
+      }
+    },
+    "切换后主屏、Spotlight、设置里的 App 图标会马上更新。桌面小组件与实时活动仍然使用主图标。" : {
+      "comment" : "Icon section footer",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switching updates the icon on Home Screen, Spotlight, and Settings. Widgets and Live Activities keep the default icon."
+          }
+        }
+      }
+    },
+    "刚刚" : {
+      "comment" : "Just now",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Just now"
+          }
+        }
+      }
+    },
+    "删除" : {
+      "comment" : "Usage tip title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "到点后会收到一条本地通知，留空则使用上方提醒内容。" : {
+      "comment" : "Push text footer",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A local notification will fire. Leave empty to use the reminder text."
+          }
+        }
+      }
+    },
+    "发邮件给作者" : {
+      "comment" : "Contact row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Email the Author"
+          }
+        }
+      }
+    },
+    "取消" : {
+      "comment" : "Cancel button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "取消置顶" : {
+      "comment" : "Swipe action: unpin",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unpin"
+          }
+        }
+      }
+    },
+    "只一次" : {
+      "comment" : "Preset: no repeat",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once"
+          }
+        }
+      }
+    },
+    "可复制内容或分享到其他 App" : {
+      "comment" : "Tip: context menu explanation",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy or share to another app"
+          }
+        }
+      }
+    },
+    "右侧开关把提醒推到锁屏与状态栏持续显示" : {
+      "comment" : "Usage tip detail",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toggle the switch to show on lock screen and status bar"
+          }
+        }
+      }
+    },
+    "向右滑动后点击「时间」可设置每日 / 每周提醒" : {
+      "comment" : "Usage tip detail",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swipe right and tap Schedule to set daily/weekly reminders"
+          }
+        }
+      }
+    },
+    "向左滑动一条提醒" : {
+      "comment" : "Usage tip detail",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swipe left on a reminder"
+          }
+        }
+      }
+    },
+    "启动失败：\\(error.localizedDescription)" : {
+      "comment" : "Error: live activity start failed",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start failed: %@"
+          }
+        }
+      }
+    },
+    "启动失败：%@" : {
+
+    },
+    "周%@" : {
+      "comment" : "Recurrence prefix for custom weekdays: e.g. 周一、三、五",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@"
+          }
+        }
+      }
+    },
+    "周末" : {
+      "comment" : "Preset: weekends",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekends"
+          }
+        }
+      }
+    },
+    "四" : {
+      "comment" : "Thursday abbreviation",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thu"
+          }
+        }
+      }
+    },
+    "在「设置 - Apple 账户 - iCloud」登录后即可在多设备间手动同步。" : {
+      "comment" : "iCloud sync section footer: prompt to sign in",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in via Settings > Apple Account > iCloud to sync across your devices."
+          }
+        }
+      }
+    },
+    "在下方输入框新建一条" : {
+      "comment" : "Empty state subtitle",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type below to create one"
+          }
+        }
+      }
+    },
+    "在底部输入框写下提醒，点发送即可" : {
+      "comment" : "Usage tip detail",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type a reminder in the bottom field and tap send"
+          }
+        }
+      }
+    },
+    "复制到剪贴板" : {
+      "comment" : "Context menu: copy",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy to Clipboard"
+          }
+        }
+      }
+    },
+    "外观" : {
+      "comment" : "Section header and label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appearance"
+          }
+        }
+      }
+    },
+    "好" : {
+      "comment" : "OK / confirm button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
+    },
+    "完成" : {
+      "comment" : "Done button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "定时" : {
+      "comment" : "Usage tip title",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schedule"
+          }
+        }
+      }
+    },
+    "实时活动" : {
+      "comment" : "Toggle label and accessibility label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Activity"
+          }
+        }
+      }
+    },
+    "将一并清空时间、重复周期和推送文案。" : {
+      "comment" : "Alert message: clear consequences",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time, repeat days, and push text will all be cleared."
+          }
+        }
+      }
+    },
+    "尚未同步" : {
+      "comment" : "Sync status",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not synced yet"
+          }
+        }
+      }
+    },
+    "工作日" : {
+      "comment" : "Preset: weekdays",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekdays"
+          }
+        }
+      }
+    },
+    "已复制到剪贴板" : {
+      "comment" : "Toast: copied",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copied to Clipboard"
+          }
+        }
+      }
+    },
+    "已开启实时活动" : {
+      "comment" : "Tip: live activity started",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Activity Started"
+          }
+        }
+      }
+    },
+    "已显示在锁屏" : {
+      "comment" : "Tip: shown on lock screen",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shown on Lock Screen"
+          }
+        }
+      }
+    },
+    "开启" : {
+      "comment" : "Usage tip title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activate"
+          }
+        }
+      }
+    },
+    "开启实时活动？" : {
+      "comment" : "Alert title: confirm live activity",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Live Activity?"
+          }
+        }
+      }
+    },
+    "当前为手动选择" : {
+      "comment" : "Status: manual override",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manual override active"
+          }
+        }
+      }
+    },
+    "当前生效" : {
+      "comment" : "Status: active",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active"
+          }
+        }
+      }
+    },
+    "当前设备或环境不支持切换 App 图标。" : {
+      "comment" : "Icon section fallback",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternate icons are not supported on this device."
+          }
+        }
+      }
+    },
+    "手动选择" : {
+      "comment" : "Manual pick section header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manual Pick"
+          }
+        }
+      }
+    },
+    "推送文案" : {
+      "comment" : "Push text section header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Push Text"
+          }
+        }
+      }
+    },
+    "提了个醒" : {
+      "comment" : "App display title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remind Me"
+          }
+        }
+      }
+    },
+    "提了个醒 反馈" : {
+      "comment" : "Email subject for feedback",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remind Me Feedback"
+          }
+        }
+      }
+    },
+    "提示" : {
+      "comment" : "Alert title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notice"
+          }
+        }
+      }
+    },
+    "提醒数据仅保存在你的设备和你自己的 iCloud 中" : {
+      "comment" : "Privacy bullet",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data is stored only on your device and iCloud"
+          }
+        }
+      }
+    },
+    "提醒数据仅保存在本机" : {
+      "comment" : "No iCloud status detail",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data is stored locally only"
+          }
+        }
+      }
+    },
+    "提醒时间" : {
+      "comment" : "Swipe action: set schedule",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schedule"
+          }
+        }
+      }
+    },
+    "收起键盘" : {
+      "comment" : "Accessibility label for dismiss keyboard",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dismiss Keyboard"
+          }
+        }
+      }
+    },
+    "新建" : {
+      "comment" : "Usage tip title",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create"
+          }
+        }
+      }
+    },
+    "新建提醒" : {
+      "comment" : "Accessibility label for submit/empty state",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Reminder"
+          }
+        }
+      }
+    },
+    "新建提醒…" : {
+      "comment" : "Text field placeholder",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New reminder…"
+          }
+        }
+      }
+    },
+    "日" : {
+      "comment" : "Sunday abbreviation",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sun"
+          }
+        }
+      }
+    },
+    "时间" : {
+      "comment" : "DatePicker label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time"
+          }
+        }
+      }
+    },
+    "是否将「\\(reminder.title)」开启为实时活动？" : {
+      "comment" : "Alert message: confirm live activity for reminder",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Live Activity for \"%@\"?"
+          }
+        }
+      }
+    },
+    "是否将「%@」开启为实时活动？" : {
+
+    },
+    "是否继续？" : {
+      "comment" : "Sync confirmation",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue?"
+          }
+        }
+      }
+    },
+    "更多" : {
+      "comment" : "Accessibility label for menu",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More"
+          }
+        }
+      }
+    },
+    "未登录 iCloud" : {
+      "comment" : "iCloud status",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not Signed into iCloud"
+          }
+        }
+      }
+    },
+    "本机 \\(p.localCount) 条 → iCloud \\(p.cloudCount) 条" : {
+      "comment" : "Upload preview",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Local: %ld → iCloud: %ld"
+          }
+        }
+      }
+    },
+    "本机 %lld 条 → iCloud %lld 条" : {
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "本机 %1$lld 条 → iCloud %2$lld 条"
+          }
+        }
+      }
+    },
+    "本机与 iCloud 已一致" : {
+      "comment" : "Alert: identical",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Local and iCloud are in sync"
+          }
+        }
+      }
+    },
+    "标准" : {
+      "comment" : "Dynamic Island display mode: standard",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        }
+      }
+    },
+    "欢迎反馈 bug、功能建议或使用感受。" : {
+      "comment" : "Contact footer",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback, suggestions, and comments are welcome."
+          }
+        }
+      }
+    },
+    "每天" : {
+      "comment" : "Preset: every day",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every Day"
+          }
+        }
+      }
+    },
+    "没有账号系统、没有广告 SDK、没有数据分析" : {
+      "comment" : "Privacy bullet",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No accounts, no ads, no analytics"
+          }
+        }
+      }
+    },
+    "浅色" : {
+      "comment" : "Appearance mode: light",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light"
+          }
+        }
+      }
+    },
+    "深色" : {
+      "comment" : "Appearance mode: dark",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark"
+          }
+        }
+      }
+    },
+    "清除" : {
+      "comment" : "Destructive button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear"
+          }
+        }
+      }
+    },
+    "清除提醒时间" : {
+      "comment" : "Clear schedule button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear Schedule"
+          }
+        }
+      }
+    },
+    "清除提醒时间？" : {
+      "comment" : "Alert: confirm clear",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear Schedule?"
+          }
+        }
+      }
+    },
+    "灵动岛" : {
+      "comment" : "Section header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dynamic Island"
+          }
+        }
+      }
+    },
+    "灵动岛常态" : {
+      "comment" : "Picker label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Island Default Mode"
+          }
+        }
+      }
+    },
+    "点击任意一条提醒可重新编辑内容" : {
+      "comment" : "Usage tip detail",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap any reminder to edit its content"
+          }
+        }
+      }
+    },
+    "点这里挑一个 emoji，或保持自动匹配" : {
+      "comment" : "Tip: emoji picker explanation",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick an emoji, or keep auto-match"
+          }
+        }
+      }
+    },
+    "用云端覆盖本机" : {
+      "comment" : "Download subtitle",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overwrite local with cloud data"
+          }
+        }
+      }
+    },
+    "用本机覆盖云端" : {
+      "comment" : "Upload subtitle",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overwrite cloud with local data"
+          }
+        }
+      }
+    },
+    "稍后" : {
+      "comment" : "Later button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
+          }
+        }
+      }
+    },
+    "紧凑" : {
+      "comment" : "Dynamic Island display mode: compact",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compact"
+          }
+        }
+      }
+    },
+    "紧凑：仅显示左侧图标。标准：左侧图标 + 右侧短文字。详细：右侧展示更多文字。" : {
+      "comment" : "Island mode description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compact: icon only. Standard: icon + short text. Detailed: more text on the right."
+          }
+        }
+      }
+    },
+    "结束实时活动" : {
+
+    },
+    "继续" : {
+      "comment" : "Continue button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        }
+      }
+    },
+    "编辑" : {
+      "comment" : "Usage tip title",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        }
+      }
+    },
+    "置顶" : {
+      "comment" : "Swipe action: pin",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pin"
+          }
+        }
+      }
+    },
+    "联系作者" : {
+      "comment" : "Contact section header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contact"
+          }
+        }
+      }
+    },
+    "自动识别" : {
+      "comment" : "Auto-detect section header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto Detect"
+          }
+        }
+      }
+    },
+    "自定表情" : {
+      "comment" : "Tip: emoji button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom Emoji"
+          }
+        }
+      }
+    },
+    "设置" : {
+      "comment" : "Toolbar button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        }
+      }
+    },
+    "设置只生效于当前设备，不同步到其他设备。" : {
+      "comment" : "Appearance footer",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This setting applies to the current device only."
+          }
+        }
+      }
+    },
+    "设置失败：\\(error.localizedDescription)" : {
+      "comment" : "Error: schedule setup failed",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setup failed: %@"
+          }
+        }
+      }
+    },
+    "设置失败：%@" : {
+
+    },
+    "详细" : {
+      "comment" : "Dynamic Island display mode: detailed",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detailed"
+          }
+        }
+      }
+    },
+    "请先在系统「设置」中登录 iCloud。" : {
+      "comment" : "Alert: not signed in",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please sign into iCloud in System Settings."
+          }
+        }
+      }
+    },
+    "请在 设置 > 提了个醒 中开启「实时活动」权限" : {
+      "comment" : "Error: no live activity permission",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please enable Live Activities in Settings > Remind Me"
+          }
+        }
+      }
+    },
+    "请在 设置 > 提了个醒 中开启「通知」权限" : {
+      "comment" : "Error: no notification permission",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please enable Notifications in Settings > Remind Me"
+          }
+        }
+      }
+    },
+    "跟随文字自动识别" : {
+      "comment" : "Auto-detect option",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto-detect from text"
+          }
+        }
+      }
+    },
+    "跟随系统" : {
+      "comment" : "Appearance mode: follow system",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System"
+          }
+        }
+      }
+    },
+    "还没有提醒" : {
+      "comment" : "Empty state title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Reminders Yet"
+          }
+        }
+      }
+    },
+    "进行中:\\(active.title)" : {
+      "comment" : "Toolbar subtitle: active reminder",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active: %@"
+          }
+        }
+      }
+    },
+    "进行中:%@" : {
+
+    },
+    "选择表情" : {
+      "comment" : "Accessibility label for emoji button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose emoji"
+          }
+        }
+      }
+    },
+    "通知、实时活动、桌面小组件均由系统本地调度" : {
+      "comment" : "Privacy bullet",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications and widgets are handled locally by the system"
+          }
+        }
+      }
+    },
+    "重复" : {
+      "comment" : "Repeat section header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeat"
+          }
+        }
+      }
+    },
+    "长按提醒" : {
+      "comment" : "Tip: long-press context menu",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Long-press Reminder"
+          }
+        }
+      }
+    },
+    "隐私承诺" : {
+      "comment" : "Privacy section header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy Promise"
+          }
+        }
+      }
+    },
+    "默认使用提醒内容：%@" : {
+      "comment" : "Push text placeholder",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default to reminder: %@"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -46,7 +46,7 @@ enum ReminderScheduler {
         }()
 
         let content = UNMutableNotificationContent()
-        content.title = "提了个醒"
+        content.title = String(localized: "提了个醒")
         content.body = body
         content.sound = .default
         if #available(iOS 15.0, *) {

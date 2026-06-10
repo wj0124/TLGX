@@ -19,9 +19,9 @@ enum DynamicIslandDisplayMode: String, CaseIterable, Codable, Hashable, Identifi
 
     var displayName: String {
         switch self {
-        case .compact: return "紧凑"
-        case .standard: return "标准"
-        case .detailed: return "详细"
+        case .compact: return String(localized: "紧凑")
+        case .standard: return String(localized: "标准")
+        case .detailed: return String(localized: "详细")
         }
     }
 
